@@ -1,14 +1,28 @@
 {% extends "base.html" %}
-   
-   {% block content %}
-       <h1>📚 Study Questions</h1>
-       <h3 style="color: #7f8c8d;">Topic: {{ topic }}</h3>
-       
-       <div style="background-color: #ecf0f1; padding: 20px; border-radius: 5px; margin: 20px 0;">
-           <pre style="white-space: pre-wrap; font-family: Arial;">{{ questions }}</pre>
-       </div>
-       
-       <a href="/" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #95a5a6; color: white; text-decoration: none; border-radius: 5px;">
-           Generate More Questions
-       </a>
-   {% endblock %}
+
+{% block content %}
+    <div style="max-width: 800px; margin: auto; padding: 20px;">
+        <h1 style="color: #2c3e50; text-align: center;">📚 Study Questions</h1>
+        <h3 style="color: #7f8c8d; text-align: center;">Topic: {{ topic }}</h3>
+
+        <div style="margin-top: 30px;">
+            {% for q in questions.splitlines() %}
+                {% if q.startswith("Q") %}
+                    <div style="background-color: #fdfefe; border: 1px solid #dcdcdc; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <p style="margin: 0; font-weight: bold; color: #34495e;">{{ q }}</p>
+                    </div>
+                {% elif q.startswith("A") %}
+                    <div style="background-color: #ecf0f1; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+                        <p style="margin: 0; color: #2c3e50;">{{ q }}</p>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/" style="padding: 12px 24px; background-color: #3498db; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: background-color 0.3s;">
+                🔄 Generate More Questions
+            </a>
+        </div>
+    </div>
+{% endblock %}
