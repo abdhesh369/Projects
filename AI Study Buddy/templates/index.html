@@ -2,6 +2,41 @@
    
    {% block content %}
        <h1>🎓 Study Buddy AI</h1>
-       <p>Your AI-powered study companion</p>
-       <p>Coming soon: Generate practice questions on any topic!</p>
+       <p style="text-align: center; color: #7f8c8d;">
+           Generate practice questions on any topic
+       </p>
+       
+       <form method="POST" action="/generate" style="margin-top: 30px;">
+           <label for="topic" style="display: block; margin-bottom: 10px; font-weight: bold;">
+               What topic are you studying?
+           </label>
+           <input 
+               type="text" 
+               id="topic" 
+               name="topic" 
+               required
+               placeholder="e.g., Python Functions, World War 2, Photosynthesis"
+               style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px;"
+           >
+           
+           <label for="num_questions" style="display: block; margin: 20px 0 10px 0; font-weight: bold;">
+               How many questions?
+           </label>
+           <select 
+               id="num_questions" 
+               name="num_questions"
+               style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px;"
+           >
+               <option value="3">3 questions</option>
+               <option value="5" selected>5 questions</option>
+               <option value="10">10 questions</option>
+           </select>
+           
+           <button 
+               type="submit"
+               style="width: 100%; margin-top: 20px; padding: 15px; font-size: 18px; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;"
+           >
+               Generate Questions
+           </button>
+       </form>
    {% endblock %}
