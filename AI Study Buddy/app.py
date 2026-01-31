@@ -1,7 +1,11 @@
+import os
 from flask import Flask, render_template, request
 from ai_helper import generate_study_questions
 
 app = Flask(__name__)
+
+if not os.getenv("OPENROUTER_API_KEY"):
+    print("WARNING: OPENROUTER_API_KEY is not set in the environment variables.")
 
 @app.route('/')
 def home():
@@ -15,18 +19,28 @@ def generate():
             return render_template('error.html',
                                    message="Please enter a topic!")
 
-        num_questions = int(request.form.get('num_questions'))
+        try:
+            num_questions = int(request.form.get('num_questions'))
+            if not 1 <= num_questions <= 20:
+                raise ValueError("Number of questions must be between 1 and 20")
+        except (ValueError, TypeError):
+             return render_template('error.html',
+                                   message="Invalid number of questions requested.")
+
         questions = generate_study_questions(topic, num_questions)
 
         if "Error:" in questions:
+            # Pass the actual error message for better debugging/feedback if safe, 
+            # or keep it generic. For now, let's show the error from the helper.
             return render_template('error.html',
-                                   message="AI service is unavailable. Please try again later.")
+                                   message=questions)
 
         return render_template('results.html',
                                topic=topic,
                                questions=questions)
 
     except Exception as e:
+        print(f"Server Error: {e}") # Log to console
         return render_template('error.html',
                                message="Something went wrong. Please try again.")
 

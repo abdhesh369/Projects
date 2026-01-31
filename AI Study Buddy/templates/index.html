@@ -1,69 +1,44 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+
+{% block content %}
 <h1>🎓 Study Buddy AI</h1>
-<p style="text-align: center; color: #7f8c8d">
+<p class="subtitle">
   Generate practice questions on any topic
 </p>
 
-<form method="POST" action="/generate" style="margin-top: 30px">
-  <label
-    for="topic"
-    style="display: block; margin-bottom: 10px; font-weight: bold"
-  >
-    What topic are you studying?
-  </label>
-  <input
-    type="text"
-    id="topic"
-    name="topic"
-    required
-    placeholder="e.g., Python Functions, World War 2, Photosynthesis"
-    style="
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-    "
-  />
+<form method="POST" action="/generate" id="generateForm">
+  <label for="topic">What topic are you studying?</label>
+  <input type="text" id="topic" name="topic" required
+    placeholder="e.g., Python Functions, World War 2, Photosynthesis" />
 
-  <label
-    for="num_questions"
-    style="display: block; margin: 20px 0 10px 0; font-weight: bold"
-  >
-    How many questions?
-  </label>
-  <select
-    id="num_questions"
-    name="num_questions"
-    style="
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-    "
-  >
+  <label for="num_questions">How many questions?</label>
+  <select id="num_questions" name="num_questions">
     <option value="3">3 questions</option>
     <option value="5" selected>5 questions</option>
     <option value="10">10 questions</option>
   </select>
 
-  <button
-    type="submit"
-    style="
-      width: 100%;
-      margin-top: 20px;
-      padding: 15px;
-      font-size: 18px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    "
-  >
-    Generate Questions
+  <button type="submit" class="btn-primary" id="submitBtn">
+    <span id="btnText">Generate Questions</span>
+    <span id="loadingSpinner" class="spinner hidden"></span>
+    <span id="loadingText" class="hidden">Generating...</span>
   </button>
 </form>
 
+<script>
+  document.getElementById('generateForm').addEventListener('submit', function (e) {
+    var btn = document.getElementById('submitBtn');
+    var btnText = document.getElementById('btnText');
+    var spinner = document.getElementById('loadingSpinner');
+    var loadingText = document.getElementById('loadingText');
+
+    // Disable button to prevent multiple submissions
+    btn.disabled = true;
+
+    // Show loading state
+    btnText.classList.add('hidden');
+    spinner.classList.remove('hidden');
+    loadingText.classList.remove('hidden');
+  });
+</script>
 {% endblock %}

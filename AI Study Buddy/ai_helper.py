@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from requests.exceptions import RequestException
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -34,14 +35,21 @@ def generate_study_questions(topic, num_questions=5):
     }
 
     try:
-        response = requests.post(BASE_URL, headers=HEADERS, data=json.dumps(payload))
+        response = requests.post(BASE_URL, headers=HEADERS, data=json.dumps(payload), timeout=30)
+        response.raise_for_status() # Raise an error for bad status codes (4xx, 5xx)
         resp_json = response.json()
 
         # Extract assistant reply
         return resp_json["choices"][0]["message"]["content"]
 
+    except requests.exceptions.Timeout:
+        return "Error: Request timed out. Please try again later."
+    except requests.exceptions.ConnectionError:
+        return "Error: Connection failed. Please check your internet connection."
+    except requests.exceptions.RequestException as e:
+        return f"Error: API Request failed - {str(e)}"
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error: An unexpected error occurred - {str(e)}"
 
 # Test it
 if __name__ == "__main__":
