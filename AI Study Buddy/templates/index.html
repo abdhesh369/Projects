@@ -18,8 +18,8 @@
     <option value="10">10 questions</option>
   </select>
 
-  <button type="submit" class="btn-primary" id="submitBtn">
-    <span id="btnText">Generate Questions</span>
+  <button type="submit" class="btn-primary" id="submitBtn" data-content="✨ Generating...">
+    <span class="btn-text" id="btnText">Generate Questions</span>
     <span id="loadingSpinner" class="spinner hidden"></span>
     <span id="loadingText" class="hidden">Generating...</span>
   </button>
@@ -32,7 +32,6 @@
     var spinner = document.getElementById('loadingSpinner');
     var loadingText = document.getElementById('loadingText');
 
-    // Disable button to prevent multiple submissions
     btn.disabled = true;
 
     // Show loading state
