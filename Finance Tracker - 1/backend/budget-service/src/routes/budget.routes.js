@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const budgetController = require('../controllers/budget.controller');
+const authMiddleware = require('../middleware/auth');
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
 router.post('/', budgetController.create);
 router.get('/', budgetController.list);
