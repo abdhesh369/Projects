@@ -8,14 +8,12 @@ const PORT = process.env.PORT || 3002;
 app.use(cors());
 app.use(express.json());
 
-// Health Check
+// Routes
+const accountRoutes = require('./routes/account.routes');
+app.use('/', accountRoutes);
+
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'account-service' });
-});
-
-// Basic Routes Placeholder
-app.get('/accounts', (req, res) => {
-    res.status(200).json({ message: 'Account list placeholder' });
 });
 
 app.listen(PORT, () => {
