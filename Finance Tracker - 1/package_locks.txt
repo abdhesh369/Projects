@@ -1,0 +1,3 @@
+D:\Projects\Finance Tracker - 1\backend\api-gateway\package-lock.json
+D:\Projects\Finance Tracker - 1\backend\auth-service\package-lock.json
+D:\Projects\Finance Tracker - 1\frontend\web-app\package-lock.json
