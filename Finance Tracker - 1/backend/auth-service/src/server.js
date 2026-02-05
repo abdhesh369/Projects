@@ -10,6 +10,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+const authRoutes = require('./routes/auth.routes');
+app.use('/', authRoutes);
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP', service: 'auth-service' });
 });
