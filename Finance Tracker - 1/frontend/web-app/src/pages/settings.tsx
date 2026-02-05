@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import {
     UserCircleIcon,
@@ -12,6 +12,8 @@ import {
     MoonIcon,
 } from '@heroicons/react/24/outline';
 import { Layout, Button, Card, Input } from '../components/common';
+import { useAuth } from '../context/AuthContext';
+import { userService } from '../services/userService';
 import styles from '../styles/Settings.module.css';
 
 interface SettingsSection {
@@ -30,14 +32,52 @@ const sections: SettingsSection[] = [
 ];
 
 export default function Settings() {
+    const { user, logout } = useAuth();
     const [activeSection, setActiveSection] = useState('profile');
-    const [isDarkMode, setIsDarkMode] = useState(true);
-    const [notifications, setNotifications] = useState({
-        email: true,
-        push: true,
-        budgetAlerts: true,
-        weeklyReport: false,
-    });
+    const [firstName, setFirstName] = useState(user?.firstName || '');
+    const [lastName, setLastName] = useState(user?.lastName || '');
+    const [theme, setTheme] = useState<'dark' | 'light'>(user?.preferences?.theme || 'dark');
+    const [notifications, setNotifications] = useState<Record<string, boolean>>(
+        typeof user?.preferences?.notifications === 'object'
+            ? user.preferences.notifications as Record<string, boolean>
+            : {
+                email: true,
+                push: true,
+                budgetAlerts: true,
+                weeklyReport: false,
+            }
+    );
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            setFirstName(user.firstName);
+            setLastName(user.lastName);
+            setTheme(user.preferences?.theme || 'dark');
+        }
+    }, [user]);
+
+    const handleSaveProfile = async () => {
+        setIsSaving(true);
+        try {
+            await userService.updateProfile({ firstName, lastName });
+            alert('Profile updated successfully!');
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            alert('Failed to update profile.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleUpdateTheme = async (newTheme: 'dark' | 'light') => {
+        try {
+            await userService.updatePreferences({ theme: newTheme });
+            setTheme(newTheme);
+        } catch (error) {
+            console.error('Failed to update theme:', error);
+        }
+    };
 
     const renderSection = () => {
         switch (activeSection) {
@@ -49,7 +89,7 @@ export default function Settings() {
 
                         <div className={styles.avatarSection}>
                             <div className={styles.avatar}>
-                                <span>JD</span>
+                                <span>{firstName?.[0]}{lastName?.[0]}</span>
                             </div>
                             <div className={styles.avatarActions}>
                                 <Button variant="secondary" size="sm">Change Photo</Button>
@@ -58,14 +98,27 @@ export default function Settings() {
                         </div>
 
                         <div className={styles.formGrid}>
-                            <Input label="First Name" defaultValue="John" />
-                            <Input label="Last Name" defaultValue="Doe" />
-                            <Input label="Email" type="email" defaultValue="john@example.com" />
-                            <Input label="Phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                            <Input
+                                label="First Name"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                            />
+                            <Input
+                                label="Last Name"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                            />
+                            <Input label="Email" type="email" value={user?.email || ''} disabled />
                         </div>
 
                         <div className={styles.formActions}>
-                            <Button variant="primary">Save Changes</Button>
+                            <Button
+                                variant="primary"
+                                onClick={handleSaveProfile}
+                                isLoading={isSaving}
+                            >
+                                Save Changes
+                            </Button>
                         </div>
                     </div>
                 );
@@ -77,65 +130,26 @@ export default function Settings() {
                         <p className={styles.sectionDescription}>Choose how you want to receive notifications</p>
 
                         <div className={styles.toggleList}>
-                            <div className={styles.toggleItem}>
-                                <div className={styles.toggleInfo}>
-                                    <span className={styles.toggleTitle}>Email Notifications</span>
-                                    <span className={styles.toggleDescription}>Receive important updates via email</span>
+                            {Object.entries(notifications).map(([key, value]) => (
+                                <div key={key} className={styles.toggleItem}>
+                                    <div className={styles.toggleInfo}>
+                                        <span className={styles.toggleTitle}>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                                        <span className={styles.toggleDescription}>Receive updates via {key}</span>
+                                    </div>
+                                    <label className={styles.toggle}>
+                                        <input
+                                            type="checkbox"
+                                            checked={!!value}
+                                            onChange={async (e) => {
+                                                const newNotifs = { ...notifications, [key]: e.target.checked };
+                                                setNotifications(newNotifs);
+                                                await userService.updatePreferences({ notifications: newNotifs });
+                                            }}
+                                        />
+                                        <span className={styles.toggleSlider} />
+                                    </label>
                                 </div>
-                                <label className={styles.toggle}>
-                                    <input
-                                        type="checkbox"
-                                        checked={notifications.email}
-                                        onChange={(e) => setNotifications({ ...notifications, email: e.target.checked })}
-                                    />
-                                    <span className={styles.toggleSlider} />
-                                </label>
-                            </div>
-
-                            <div className={styles.toggleItem}>
-                                <div className={styles.toggleInfo}>
-                                    <span className={styles.toggleTitle}>Push Notifications</span>
-                                    <span className={styles.toggleDescription}>Get real-time alerts on your device</span>
-                                </div>
-                                <label className={styles.toggle}>
-                                    <input
-                                        type="checkbox"
-                                        checked={notifications.push}
-                                        onChange={(e) => setNotifications({ ...notifications, push: e.target.checked })}
-                                    />
-                                    <span className={styles.toggleSlider} />
-                                </label>
-                            </div>
-
-                            <div className={styles.toggleItem}>
-                                <div className={styles.toggleInfo}>
-                                    <span className={styles.toggleTitle}>Budget Alerts</span>
-                                    <span className={styles.toggleDescription}>Get notified when nearing budget limits</span>
-                                </div>
-                                <label className={styles.toggle}>
-                                    <input
-                                        type="checkbox"
-                                        checked={notifications.budgetAlerts}
-                                        onChange={(e) => setNotifications({ ...notifications, budgetAlerts: e.target.checked })}
-                                    />
-                                    <span className={styles.toggleSlider} />
-                                </label>
-                            </div>
-
-                            <div className={styles.toggleItem}>
-                                <div className={styles.toggleInfo}>
-                                    <span className={styles.toggleTitle}>Weekly Report</span>
-                                    <span className={styles.toggleDescription}>Receive weekly financial summaries</span>
-                                </div>
-                                <label className={styles.toggle}>
-                                    <input
-                                        type="checkbox"
-                                        checked={notifications.weeklyReport}
-                                        onChange={(e) => setNotifications({ ...notifications, weeklyReport: e.target.checked })}
-                                    />
-                                    <span className={styles.toggleSlider} />
-                                </label>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 );
@@ -148,71 +162,20 @@ export default function Settings() {
 
                         <div className={styles.themeSelector}>
                             <button
-                                className={`${styles.themeOption} ${!isDarkMode ? styles.active : ''}`}
-                                onClick={() => setIsDarkMode(false)}
+                                className={`${styles.themeOption} ${theme === 'light' ? styles.active : ''}`}
+                                onClick={() => handleUpdateTheme('light')}
                             >
                                 <SunIcon className={styles.themeIcon} />
                                 <span>Light</span>
                             </button>
                             <button
-                                className={`${styles.themeOption} ${isDarkMode ? styles.active : ''}`}
-                                onClick={() => setIsDarkMode(true)}
+                                className={`${styles.themeOption} ${theme === 'dark' ? styles.active : ''}`}
+                                onClick={() => handleUpdateTheme('dark')}
                             >
                                 <MoonIcon className={styles.themeIcon} />
                                 <span>Dark</span>
                             </button>
                         </div>
-
-                        <div className={styles.colorSection}>
-                            <h3 className={styles.colorTitle}>Accent Color</h3>
-                            <div className={styles.colorOptions}>
-                                {['#6366F1', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#EF4444'].map((color) => (
-                                    <button
-                                        key={color}
-                                        className={`${styles.colorOption} ${color === '#6366F1' ? styles.selected : ''}`}
-                                        style={{ backgroundColor: color }}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 'security':
-                return (
-                    <div className={styles.sectionContent}>
-                        <h2 className={styles.sectionTitle}>Security</h2>
-                        <p className={styles.sectionDescription}>Manage your password and security settings</p>
-
-                        <Card className={styles.securityCard}>
-                            <div className={styles.securityItem}>
-                                <div className={styles.securityInfo}>
-                                    <span className={styles.securityTitle}>Password</span>
-                                    <span className={styles.securityDescription}>Last changed 30 days ago</span>
-                                </div>
-                                <Button variant="secondary" size="sm">Change</Button>
-                            </div>
-                        </Card>
-
-                        <Card className={styles.securityCard}>
-                            <div className={styles.securityItem}>
-                                <div className={styles.securityInfo}>
-                                    <span className={styles.securityTitle}>Two-Factor Authentication</span>
-                                    <span className={styles.securityDescription}>Add an extra layer of security</span>
-                                </div>
-                                <Button variant="secondary" size="sm">Enable</Button>
-                            </div>
-                        </Card>
-
-                        <Card className={styles.securityCard}>
-                            <div className={styles.securityItem}>
-                                <div className={styles.securityInfo}>
-                                    <span className={styles.securityTitle}>Active Sessions</span>
-                                    <span className={styles.securityDescription}>Manage your logged-in devices</span>
-                                </div>
-                                <Button variant="secondary" size="sm">View</Button>
-                            </div>
-                        </Card>
                     </div>
                 );
 
@@ -261,7 +224,10 @@ export default function Settings() {
 
                                 <div className={styles.navDivider} />
 
-                                <button className={`${styles.navItem} ${styles.danger}`}>
+                                <button
+                                    className={`${styles.navItem} ${styles.danger}`}
+                                    onClick={logout}
+                                >
                                     <ArrowRightOnRectangleIcon className={styles.navIcon} />
                                     <div className={styles.navText}>
                                         <span className={styles.navTitle}>Log Out</span>

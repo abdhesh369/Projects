@@ -1,9 +1,6 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
-const JWT_EXPIRES_IN = '24h';
+const authenticationService = require('../services/authentication.service');
+const jwtService = require('../services/jwt.service');
 
 const authController = {
     async register(req, res) {
@@ -17,8 +14,7 @@ const authController = {
             }
 
             // Hash password
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(password, salt);
+            const passwordHash = await authenticationService.hashPassword(password);
 
             // Create user
             const user = await User.create({
@@ -29,7 +25,7 @@ const authController = {
             });
 
             // Generate token
-            const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+            const token = jwtService.generateToken({ id: user.id });
 
             res.status(201).json({
                 user,
@@ -45,20 +41,14 @@ const authController = {
         try {
             const { email, password } = req.body;
 
-            // Find user
-            const user = await User.findByEmail(email);
+            // Validate user and credentials
+            const user = await authenticationService.validateUser(email, password);
             if (!user) {
                 return res.status(401).json({ error: 'Invalid credentials' });
             }
 
-            // Check password
-            const isMatch = await bcrypt.compare(password, user.password_hash);
-            if (!isMatch) {
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-
             // Generate token
-            const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+            const token = jwtService.generateToken({ id: user.id });
 
             // Remove password hash from response
             delete user.password_hash;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ShoppingBagIcon,
     HomeIcon,
@@ -7,25 +7,9 @@ import {
     BoltIcon,
     CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
+import { transactionService } from '../../services/transactionService';
+import { Transaction } from '../../types';
 import styles from './RecentTransactions.module.css';
-
-interface Transaction {
-    id: string;
-    description: string;
-    category: string;
-    amount: number;
-    type: 'income' | 'expense';
-    date: string;
-}
-
-// Demo data
-const transactions: Transaction[] = [
-    { id: '1', description: 'Grocery Shopping', category: 'shopping', amount: -85.50, type: 'expense', date: '2026-02-04' },
-    { id: '2', description: 'Salary Deposit', category: 'income', amount: 4500.00, type: 'income', date: '2026-02-03' },
-    { id: '3', description: 'Electric Bill', category: 'utilities', amount: -120.00, type: 'expense', date: '2026-02-02' },
-    { id: '4', description: 'Netflix Subscription', category: 'entertainment', amount: -15.99, type: 'expense', date: '2026-02-01' },
-    { id: '5', description: 'Rent Payment', category: 'housing', amount: -1200.00, type: 'expense', date: '2026-02-01' },
-];
 
 const categoryIcons: Record<string, React.ReactNode> = {
     shopping: <ShoppingBagIcon />,
@@ -46,12 +30,31 @@ const categoryColors: Record<string, string> = {
 };
 
 export const RecentTransactions: React.FC = () => {
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const data = await transactionService.getRecentTransactions(5);
+                setTransactions(data);
+            } catch (error) {
+                console.error('Failed to fetch recent transactions:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTransactions();
+    }, []);
+
     const formatAmount = (amount: number) => {
-        const formatted = Math.abs(amount).toLocaleString('en-US', {
+        const value = Number(amount);
+        const formatted = Math.abs(value).toLocaleString('en-US', {
             style: 'currency',
             currency: 'USD',
         });
-        return amount >= 0 ? `+${formatted}` : `-${formatted}`;
+        return value >= 0 ? `+${formatted}` : `-${formatted}`;
     };
 
     const formatDate = (dateStr: string) => {
@@ -76,27 +79,36 @@ export const RecentTransactions: React.FC = () => {
             </div>
 
             <div className={styles.list}>
-                {transactions.map((transaction) => (
-                    <div key={transaction.id} className={styles.item}>
-                        <div
-                            className={styles.iconWrapper}
-                            style={{ backgroundColor: `${categoryColors[transaction.category]}20` }}
-                        >
-                            <span style={{ color: categoryColors[transaction.category] }}>
-                                {categoryIcons[transaction.category]}
-                            </span>
-                        </div>
+                {isLoading ? (
+                    <p>Loading transactions...</p>
+                ) : transactions.length > 0 ? (
+                    transactions.map((transaction) => {
+                        const category = transaction.category?.toLowerCase() || 'shopping';
+                        return (
+                            <div key={transaction.id} className={styles.item}>
+                                <div
+                                    className={styles.iconWrapper}
+                                    style={{ backgroundColor: `${categoryColors[category] || '#94A3B8'}20` }}
+                                >
+                                    <span style={{ color: categoryColors[category] || '#94A3B8' }}>
+                                        {categoryIcons[category] || <CurrencyDollarIcon />}
+                                    </span>
+                                </div>
 
-                        <div className={styles.details}>
-                            <span className={styles.description}>{transaction.description}</span>
-                            <span className={styles.date}>{formatDate(transaction.date)}</span>
-                        </div>
+                                <div className={styles.details}>
+                                    <span className={styles.description}>{transaction.description}</span>
+                                    <span className={styles.date}>{formatDate(transaction.date)}</span>
+                                </div>
 
-                        <span className={`${styles.amount} ${transaction.type === 'income' ? styles.income : styles.expense}`}>
-                            {formatAmount(transaction.amount)}
-                        </span>
-                    </div>
-                ))}
+                                <span className={`${styles.amount} ${transaction.type === 'income' ? styles.income : styles.expense}`}>
+                                    {formatAmount(transaction.amount)}
+                                </span>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p>No recent transactions.</p>
+                )}
             </div>
         </div>
     );

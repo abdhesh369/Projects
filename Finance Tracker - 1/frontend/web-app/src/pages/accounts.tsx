@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import {
     PlusIcon,
@@ -8,25 +8,9 @@ import {
     WalletIcon,
 } from '@heroicons/react/24/outline';
 import { Layout, Button, Card } from '../components/common';
+import { accountService } from '../services/accountService';
+import { Account } from '../types';
 import styles from '../styles/Accounts.module.css';
-
-interface Account {
-    id: string;
-    name: string;
-    type: 'checking' | 'savings' | 'credit' | 'investment' | 'cash';
-    balance: number;
-    institution: string;
-    color: string;
-    lastTransaction: string;
-}
-
-const accounts: Account[] = [
-    { id: '1', name: 'Main Checking', type: 'checking', balance: 12450.50, institution: 'Chase Bank', color: '#6366F1', lastTransaction: '2026-02-04' },
-    { id: '2', name: 'Savings Account', type: 'savings', balance: 8500.00, institution: 'Chase Bank', color: '#10B981', lastTransaction: '2026-02-01' },
-    { id: '3', name: 'Credit Card', type: 'credit', balance: -1250.00, institution: 'American Express', color: '#F59E0B', lastTransaction: '2026-02-04' },
-    { id: '4', name: 'Investment Portfolio', type: 'investment', balance: 25000.00, institution: 'Fidelity', color: '#8B5CF6', lastTransaction: '2026-01-28' },
-    { id: '5', name: 'Cash Wallet', type: 'cash', balance: 350.00, institution: 'Personal', color: '#EC4899', lastTransaction: '2026-02-03' },
-];
 
 const accountIcons: Record<string, React.ReactNode> = {
     checking: <BanknotesIcon />,
@@ -37,7 +21,24 @@ const accountIcons: Record<string, React.ReactNode> = {
 };
 
 export default function Accounts() {
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [selectedType, setSelectedType] = useState<string>('all');
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchAccounts = async () => {
+            try {
+                const data = await accountService.getAccounts();
+                setAccounts(data);
+            } catch (error) {
+                console.error('Failed to fetch accounts:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAccounts();
+    }, []);
 
     const filteredAccounts = selectedType === 'all'
         ? accounts
@@ -90,19 +91,19 @@ export default function Accounts() {
                         <Card className={styles.summaryCard}>
                             <span className={styles.summaryLabel}>Net Worth</span>
                             <span className={`${styles.summaryValue} ${totalBalance >= 0 ? styles.positive : styles.negative}`}>
-                                {formatCurrency(totalBalance)}
+                                {isLoading ? '...' : formatCurrency(totalBalance)}
                             </span>
                         </Card>
                         <Card className={styles.summaryCard}>
                             <span className={styles.summaryLabel}>Total Assets</span>
                             <span className={`${styles.summaryValue} ${styles.positive}`}>
-                                {formatCurrency(totalAssets)}
+                                {isLoading ? '...' : formatCurrency(totalAssets)}
                             </span>
                         </Card>
                         <Card className={styles.summaryCard}>
                             <span className={styles.summaryLabel}>Total Liabilities</span>
                             <span className={`${styles.summaryValue} ${styles.negative}`}>
-                                {formatCurrency(totalLiabilities)}
+                                {isLoading ? '...' : formatCurrency(totalLiabilities)}
                             </span>
                         </Card>
                     </div>
@@ -122,49 +123,57 @@ export default function Accounts() {
 
                     {/* Accounts Grid */}
                     <div className={styles.accountsGrid}>
-                        {filteredAccounts.map((account) => (
-                            <Card
-                                key={account.id}
-                                className={styles.accountCard}
-                                onClick={() => { }}
-                            >
-                                <div className={styles.accountHeader}>
-                                    <div
-                                        className={styles.accountIcon}
-                                        style={{ backgroundColor: `${account.color}20`, color: account.color }}
-                                    >
-                                        {accountIcons[account.type]}
+                        {isLoading ? (
+                            <p>Loading accounts...</p>
+                        ) : filteredAccounts.length > 0 ? (
+                            filteredAccounts.map((account) => (
+                                <Card
+                                    key={account.id}
+                                    className={styles.accountCard}
+                                    onClick={() => { }}
+                                >
+                                    <div className={styles.accountHeader}>
+                                        <div
+                                            className={styles.accountIcon}
+                                            style={{ backgroundColor: `${account.color}20`, color: account.color }}
+                                        >
+                                            {accountIcons[account.type]}
+                                        </div>
+                                        <span
+                                            className={styles.accountType}
+                                            style={{ backgroundColor: `${account.color}20`, color: account.color }}
+                                        >
+                                            {account.type}
+                                        </span>
                                     </div>
-                                    <span
-                                        className={styles.accountType}
-                                        style={{ backgroundColor: `${account.color}20`, color: account.color }}
-                                    >
-                                        {account.type}
-                                    </span>
-                                </div>
 
-                                <h3 className={styles.accountName}>{account.name}</h3>
-                                <p className={styles.accountInstitution}>{account.institution}</p>
+                                    <h3 className={styles.accountName}>{account.name}</h3>
+                                    <p className={styles.accountInstitution}>{account.institution}</p>
 
-                                <div className={styles.accountBalance}>
-                                    <span className={account.balance >= 0 ? styles.positive : styles.negative}>
-                                        {formatCurrency(account.balance)}
-                                    </span>
-                                </div>
+                                    <div className={styles.accountBalance}>
+                                        <span className={account.balance >= 0 ? styles.positive : styles.negative}>
+                                            {formatCurrency(account.balance)}
+                                        </span>
+                                    </div>
 
-                                <div className={styles.accountFooter}>
-                                    <span className={styles.lastTransaction}>
-                                        Last transaction: {formatDate(account.lastTransaction)}
-                                    </span>
-                                </div>
-                            </Card>
-                        ))}
+                                    <div className={styles.accountFooter}>
+                                        <span className={styles.lastTransaction}>
+                                            Created: {formatDate(account.createdAt)}
+                                        </span>
+                                    </div>
+                                </Card>
+                            ))
+                        ) : (
+                            <p>No accounts found.</p>
+                        )}
 
                         {/* Add Account Card */}
-                        <Card className={styles.addAccountCard} onClick={() => { }}>
-                            <PlusIcon className={styles.addIcon} />
-                            <span>Add New Account</span>
-                        </Card>
+                        {!isLoading && (
+                            <Card className={styles.addAccountCard} onClick={() => { }}>
+                                <PlusIcon className={styles.addIcon} />
+                                <span>Add New Account</span>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </Layout>

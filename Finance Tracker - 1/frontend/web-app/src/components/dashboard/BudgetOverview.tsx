@@ -1,24 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { analyticsService } from '../../services/analyticsService';
+import { CategoryBreakdown } from '../../types';
 import styles from './BudgetOverview.module.css';
 
-interface Budget {
-    id: string;
-    name: string;
-    spent: number;
-    limit: number;
-    color: string;
-}
-
-// Demo data
-const budgets: Budget[] = [
-    { id: '1', name: 'Food & Dining', spent: 420, limit: 500, color: '#F59E0B' },
-    { id: '2', name: 'Transportation', spent: 180, limit: 200, color: '#8B5CF6' },
-    { id: '3', name: 'Entertainment', spent: 95, limit: 150, color: '#EC4899' },
-    { id: '4', name: 'Shopping', spent: 350, limit: 300, color: '#EF4444' },
-    { id: '5', name: 'Utilities', spent: 145, limit: 200, color: '#10B981' },
-];
-
 export const BudgetOverview: React.FC = () => {
+    const [budgets, setBudgets] = useState<CategoryBreakdown[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchBudgets = async () => {
+            try {
+                const breakdown = await analyticsService.getCategoryBreakdown();
+                setBudgets(breakdown);
+            } catch (error) {
+                console.error('Failed to fetch budget breakdown:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchBudgets();
+    }, []);
+
     const formatCurrency = (amount: number) => {
         return amount.toLocaleString('en-US', {
             style: 'currency',
@@ -28,63 +31,58 @@ export const BudgetOverview: React.FC = () => {
         });
     };
 
-    const getProgressPercentage = (spent: number, limit: number) => {
-        return Math.min((spent / limit) * 100, 100);
-    };
-
-    const isOverBudget = (spent: number, limit: number) => {
-        return spent > limit;
+    const getProgressPercentage = (percentage: number) => {
+        return Math.min(percentage, 100);
     };
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h3 className={styles.title}>Budget Overview</h3>
-                <button className={styles.viewAll}>Manage</button>
+                <h3 className={styles.title}>Spending by Category</h3>
+                <button className={styles.viewAll}>Details</button>
             </div>
 
             <div className={styles.list}>
-                {budgets.map((budget) => {
-                    const percentage = getProgressPercentage(budget.spent, budget.limit);
-                    const overBudget = isOverBudget(budget.spent, budget.limit);
+                {isLoading ? (
+                    <p>Loading budgets...</p>
+                ) : budgets.length > 0 ? (
+                    budgets.map((budget) => {
+                        const percentage = getProgressPercentage(budget.percentage);
+                        const overBudget = budget.percentage > 100;
 
-                    return (
-                        <div key={budget.id} className={styles.item}>
-                            <div className={styles.itemHeader}>
-                                <div className={styles.itemInfo}>
-                                    <span
-                                        className={styles.dot}
-                                        style={{ backgroundColor: budget.color }}
+                        return (
+                            <div key={budget.categoryId} className={styles.item}>
+                                <div className={styles.itemHeader}>
+                                    <div className={styles.itemInfo}>
+                                        <span
+                                            className={styles.dot}
+                                            style={{ backgroundColor: budget.color }}
+                                        />
+                                        <span className={styles.name}>{budget.categoryName}</span>
+                                    </div>
+                                    <div className={styles.amounts}>
+                                        <span className={overBudget ? styles.overBudget : ''}>
+                                            {formatCurrency(budget.amount)}
+                                        </span>
+                                        <span className={styles.separator}>({Math.round(budget.percentage)}%)</span>
+                                    </div>
+                                </div>
+
+                                <div className={styles.progressBar}>
+                                    <div
+                                        className={`${styles.progress} ${overBudget ? styles.danger : ''}`}
+                                        style={{
+                                            width: `${percentage}%`,
+                                            backgroundColor: overBudget ? 'var(--color-danger)' : budget.color,
+                                        }}
                                     />
-                                    <span className={styles.name}>{budget.name}</span>
-                                </div>
-                                <div className={styles.amounts}>
-                                    <span className={overBudget ? styles.overBudget : ''}>
-                                        {formatCurrency(budget.spent)}
-                                    </span>
-                                    <span className={styles.separator}>/</span>
-                                    <span className={styles.limit}>{formatCurrency(budget.limit)}</span>
                                 </div>
                             </div>
-
-                            <div className={styles.progressBar}>
-                                <div
-                                    className={`${styles.progress} ${overBudget ? styles.danger : ''}`}
-                                    style={{
-                                        width: `${percentage}%`,
-                                        backgroundColor: overBudget ? 'var(--color-danger)' : budget.color,
-                                    }}
-                                />
-                            </div>
-
-                            {overBudget && (
-                                <span className={styles.warningText}>
-                                    Over by {formatCurrency(budget.spent - budget.limit)}
-                                </span>
-                            )}
-                        </div>
-                    );
-                })}
+                        );
+                    })
+                ) : (
+                    <p>No budget data available.</p>
+                )}
             </div>
         </div>
     );

@@ -8,9 +8,9 @@ const PORT = process.env.PORT || 3005;
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'UP', service: 'banking-integration-service' });
-});
+// Routes
+const bankingRoutes = require('./routes/banking.routes');
+app.use('/', bankingRoutes);
 
 app.listen(PORT, () => {
     console.log(`Banking Integration Service running on port ${PORT}`);

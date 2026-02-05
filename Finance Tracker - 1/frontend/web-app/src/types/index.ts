@@ -12,7 +12,7 @@ export interface User {
 export interface UserPreferences {
     currency: string;
     theme: 'dark' | 'light';
-    notifications: boolean;
+    notifications: Record<string, boolean> | boolean;
 }
 
 // ===== Account Types =====
@@ -39,6 +39,7 @@ export interface Transaction {
     userId: string;
     accountId: string;
     categoryId: string;
+    category?: string; // Optional category name for display
     amount: number;
     type: TransactionType;
     description: string;

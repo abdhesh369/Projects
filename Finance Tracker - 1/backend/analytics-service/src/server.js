@@ -8,6 +8,9 @@ const PORT = process.env.PORT || 3003;
 app.use(cors());
 app.use(express.json());
 
+const analyticsRoutes = require('./routes/analytics.routes');
+app.use('/', analyticsRoutes);
+
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'analytics-service' });
 });

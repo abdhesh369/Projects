@@ -1,9 +1,9 @@
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import {
     BanknotesIcon,
     ArrowTrendingUpIcon,
     ArrowTrendingDownIcon,
-    PiggyBankIcon,
 } from '@heroicons/react/24/outline';
 import { Layout } from '../components/common';
 import {
@@ -12,6 +12,8 @@ import {
     SpendingChart,
     BudgetOverview,
 } from '../components/dashboard';
+import { analyticsService } from '../services/analyticsService';
+import { DashboardSummary } from '../types';
 import styles from '../styles/Dashboard.module.css';
 
 // Using a wallet icon as PiggyBankIcon doesn't exist
@@ -22,6 +24,31 @@ const SavingsIcon = () => (
 );
 
 export default function Dashboard() {
+    const [summary, setSummary] = useState<DashboardSummary | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSummary = async () => {
+            try {
+                const data = await analyticsService.getSummary();
+                setSummary(data);
+            } catch (error) {
+                console.error('Failed to fetch dashboard summary:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSummary();
+    }, []);
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(value);
+    };
+
     return (
         <>
             <Head>
@@ -42,31 +69,32 @@ export default function Dashboard() {
                     <div className={styles.summaryGrid}>
                         <SummaryCard
                             title="Total Balance"
-                            value="$24,562.00"
+                            value={isLoading ? '...' : formatCurrency(summary?.totalBalance || 0)}
                             change={12.5}
                             icon={<BanknotesIcon />}
                             variant="default"
                         />
                         <SummaryCard
                             title="Income"
-                            value="$8,450.00"
+                            value={isLoading ? '...' : formatCurrency(summary?.totalIncome || 0)}
                             change={8.2}
                             icon={<ArrowTrendingUpIcon />}
                             variant="income"
                         />
                         <SummaryCard
                             title="Expenses"
-                            value="$3,890.00"
+                            value={isLoading ? '...' : formatCurrency(summary?.totalExpenses || 0)}
                             change={-4.3}
                             icon={<ArrowTrendingDownIcon />}
                             variant="expense"
                         />
                         <SummaryCard
-                            title="Savings"
-                            value="$4,560.00"
+                            title="Savings Rate"
+                            value={isLoading ? '...' : `${summary?.savingsRate || 0}%`}
                             change={15.8}
                             icon={<SavingsIcon />}
                             variant="savings"
+                            changeLabel="of total income"
                         />
                     </div>
 
