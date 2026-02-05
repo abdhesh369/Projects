@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>🎓 Study Buddy AI</h1>
+<p class="subtitle">Generate practice questions on any topic</p>
+
+<form method="POST" action="/generate" id="generateForm">
+
+  <label for="topic">What topic are you studying?</label>
+  <input
+    type="text"
+    id="topic"
+    name="topic"
+    required
+    placeholder="e.g., Python Functions, World War 2, Photosynthesis"
+  />
+
+  <label for="num_questions">How many questions?</label>
+  <select id="num_questions" name="num_questions">
+    <option value="3">3 questions</option>
+    <option value="5" selected>5 questions</option>
+    <option value="10">10 questions</option>
+  </select>
+
+  <label for="difficulty">Choose the difficulty</label>
+  <select id="difficulty" name="difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+
+  <button type="submit" class="btn-primary" id="submitBtn">
+    <span id="btnText">Generate Questions</span>
+    <span id="loadingSpinner" class="spinner hidden"></span>
+    <span id="loadingText" class="hidden">Generating...</span>
+  </button>
+
+</form>
+
+<script>
+  document.getElementById("generateForm").addEventListener("submit", function () {
+    const btn = document.getElementById("submitBtn");
+    const btnText = document.getElementById("btnText");
+    const spinner = document.getElementById("loadingSpinner");
+    const loadingText = document.getElementById("loadingText");
+
+    btn.disabled = true;
+    btnText.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    loadingText.classList.remove("hidden");
+  });
+</script>
+
+{% endblock %}

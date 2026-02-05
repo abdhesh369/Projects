@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="results-title">📚 Study Questions</h1>
+<p class="subtitle">Topic: {{ topic }}</p>
+
+<div class="questions-container">
+    {% for q in questions.splitlines() %}
+    {% if q.strip() %}
+    {% if q.strip().startswith("Q") %}
+    <div class="question-card">
+        <div class="question-text">{{ q }}</div>
+        {% elif q.strip().startswith("A") %}
+        <div class="answer-text">{{ q }}</div>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+</div>
+
+<div style="text-align: center; margin-top: 30px;">
+    <a href="/" class="btn-secondary">
+        🔄 Generate More Questions
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+.card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.hover {
+    transition: all var(--transition-base);
+}
+
+.hover:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(148, 163, 184, 0.3);
+    box-shadow: var(--shadow-lg);
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.clickable:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Padding variants */
+.padding-none {
+    padding: 0;
+}
+
+.padding-sm {
+    padding: var(--space-sm);
+}
+
+.padding-md {
+    padding: var(--space-lg);
+}
+
+.padding-lg {
+    padding: var(--space-xl);
+}
+
+/* Gradient border effect */
+.gradient {
+    border: none;
+}
+
+.gradientBorder {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    padding: 1px;
+    background: var(--gradient-primary);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-color-light);
+    margin-bottom: var(--space-md);
+}
+
+.headerContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.headerContent h3,
+.headerContent h4 {
+    margin: 0;
+}
+
+.headerAction {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+/* Body */
+.body {
+    flex: 1;
+}
+
+/* Footer */
+.footer {
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-color-light);
+    margin-top: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+}

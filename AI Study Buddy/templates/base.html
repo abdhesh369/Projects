@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Buddy AI</title>
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/4712/4712027.png"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="overlay"></div>
+    <div class="container">
+      {% block content %}{% endblock %}
+      
+      <div class="footer">
+        <p>Made with ❤️ by Study Buddy AI</p>
+        <p style="font-size: 0.8rem; margin-top: 5px;">© 2026 Study Buddy AI - Free & Reliable</p>
+      </div>
+    </div>
+  </body>
+</html>
