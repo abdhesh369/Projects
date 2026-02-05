@@ -30,6 +30,9 @@ for (const [path, target] of Object.entries(routes)) {
         pathRewrite: {
             [`^${path}`]: '',
         },
+        onProxyReq: (proxyReq, req, res) => {
+            console.log(`[Proxy] ${req.method} ${req.url} -> ${target}`);
+        }
     }));
 }
 
