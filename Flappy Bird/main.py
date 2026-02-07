@@ -65,11 +65,11 @@ Game_Sprites['pipe'] = (
     pygame.image.load('Public/Pipe.png').convert_alpha()
 )
 
-Game_Sounds['die'] = pygame.mixer.Sound('Public/die.wav')
-Game_Sounds['hit'] = pygame.mixer.Sound('Public/hit.wav')
-Game_Sounds['point'] = pygame.mixer.Sound('Public/point.wav')
-Game_Sounds['swoosh'] = pygame.mixer.Sound('Public/swoosh.wav')
-Game_Sounds['wing'] = pygame.mixer.Sound('Public/wing.wav')
+Game_Sounds['die'] = pygame.mixer.Sound('Public/die.mp3')
+Game_Sounds['hit'] = pygame.mixer.Sound('Public/hit.mp3')
+Game_Sounds['point'] = pygame.mixer.Sound('Public/point.mp3')
+Game_Sounds['swoosh'] = pygame.mixer.Sound('Public/swoosh.mp3')
+Game_Sounds['wing'] = pygame.mixer.Sound('Public/wing.mp3')
 
 Game_Sprites['background'] = pygame.image.load(
     'Public/Background.jpg').convert()
