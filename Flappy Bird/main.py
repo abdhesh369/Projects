@@ -1,16 +1,73 @@
+import random
+import sys
 import pygame
-x=pygame.init()
-display=pygame.display.set_mode((1000,1000))
+from pygame.local import *
+FPS = 32
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 800
+x = pygame.init()
+FPSCLOCK = pygame.time.Clock()
+display = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("My Game")
+Ground_y = SCREEN_HEIGHT*0.8
+Game_Sprites = {}
+Game_Sounds = {}
+Player = 'Public/bird.png'
+Background = 'Public/Background.jpg'
+Pipe = 'Public/Pipe.png'
 
-game_exit=False
+
+game_exit = False
 
 clock = pygame.time.Clock()
+Game_Sprites['number'] = (
+    pygame.image.load('Public/0.png').convert_alpha(),
+    pygame.image.load('Public/1.png').convert_alpha(),
+    pygame.image.load('Public/2.png').convert_alpha(),
+    pygame.image.load('Public/3.png').convert_alpha(),
+    pygame.image.load('Public/4.png').convert_alpha(),
+    pygame.image.load('Public/5.png').convert_alpha(),
+    pygame.image.load('Public/6.png').convert_alpha(),
+    pygame.image.load('Public/7.png').convert_alpha(),
+    pygame.image.load('Public/8.png').convert_alpha(),
+    pygame.image.load('Public/9.png').convert_alpha(),
+)
+Game_Sprites['message'] = pygame.image.load(
+    'Public/message.png').convert_alpha()
+Game_Sprites['base'] = pygame.image.load('Public/base.png').convert_alpha()
+Game_Sprites['pipe'] = (
+    pygame.transform.rotate(pygame.image.load(
+        'Public/Pipe.png').convert_alpha(), 180),
+    pygame.image.load('Public/Pipe.png').convert_alpha()
+)
+
+Game_Sounds['die'] = pygame.mixer.Sound('Public/die.wav')
+Game_Sounds['hit'] = pygame.mixer.Sound('Public/hit.wav')
+Game_Sounds['point'] = pygame.mixer.Sound('Public/point.wav')
+Game_Sounds['swoosh'] = pygame.mixer.Sound('Public/swoosh.wav')
+Game_Sounds['wing'] = pygame.mixer.Sound('Public/wing.wav')
+
+Game_Sprites['background'] = pygame.image.load(
+    'Public/Background.jpg').convert()
+Game_Sprites['player'] = pygame.image.load(
+    'Public/bird.png').convert_alpha()
+
+
+while True:
+    welcome_screen()
+    main_game()
+    
+    display.blit(Game_Sprites['background'], (0, 0))
+
 
 while not game_exit:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_exit = True
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                game_exit = True
 
     pygame.display.update()
     clock.tick(60)
