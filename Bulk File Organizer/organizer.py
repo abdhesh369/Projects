@@ -6,21 +6,15 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-import os
-
-
+from typing import Dict, List, Any
 class OrganizerError(Exception):
     pass
-
 
 class ConfigError(OrganizerError):
     pass
 
-
 class FileOperationError(OrganizerError):
     pass
-
 
 @dataclass
 class OperationRecord:
@@ -37,12 +31,10 @@ class OperationRecord:
 
 
 class FileOrganizer:
-    
     def __init__(self, file_type_map: Dict[str, List[str]], 
                  dry_run: bool = False,
                  skip_hidden: bool = True,
                  recursive: bool = False):
-        
         self.file_type_map = {k: [ext.lower() for ext in v] 
                              for k, v in file_type_map.items()}
         self.dry_run = dry_run
@@ -58,7 +50,6 @@ class FileOrganizer:
         }
     
     def get_category(self, file_path: Path) -> str:
-        
         extension = file_path.suffix.lower()
         
         for category, extensions in self.file_type_map.items():
@@ -68,13 +59,11 @@ class FileOrganizer:
     
     def generate_unique_path(self, destination_dir: Path, 
                             original_path: Path) -> Path:
-       
         destination = destination_dir / original_path.name
         
         if not destination.exists():
             return destination
         
-        # Try timestamp + counter pattern for better uniqueness
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         counter = 1
         stem = original_path.stem
@@ -88,21 +77,17 @@ class FileOrganizer:
                 return destination
             counter += 1
             
-            # Safety break to prevent infinite loops
             if counter > 999:
                 raise FileOperationError(
                     f"Cannot generate unique name for {original_path}"
                 )
     
     def organize_file(self, file_path: Path, source_root: Path) -> bool:
-        
-        # Skip hidden files if configured
         if self.skip_hidden and file_path.name.startswith('.'):
             logging.debug(f"Skipping hidden file: {file_path.name}")
             self.stats["skipped"] += 1
             return True
         
-        # Skip the script's own log files
         if file_path.name in ['organizer.log', 'organizer_undo.json']:
             return True
         
@@ -145,7 +130,6 @@ class FileOrganizer:
             return False
     
     def organize_directory(self, source_path: Path) -> None:
-       
         if not source_path.exists():
             raise FileOperationError(f"Source path does not exist: {source_path}")
         
@@ -195,7 +179,7 @@ class FileOrganizer:
     def _print_summary(self) -> None:
         mode = "DRY RUN" if self.dry_run else "LIVE"
         print(f"\n{'='*50}")
-        print(f"Operation Summary ({mode})")
+        print(f" Operation Summary ({mode})")
         print(f"{'='*50}")
         print(f"Files processed: {self.stats['processed']}")
         print(f"Files moved:     {self.stats['moved']}")
@@ -206,7 +190,6 @@ class FileOrganizer:
         print(f"{'='*50}\n")
     
     def save_undo_log(self, log_path: Path = Path("organizer_undo.json")) -> None:
-        
         if self.dry_run or not self.operations:
             return
         
@@ -219,7 +202,6 @@ class FileOrganizer:
     
     @staticmethod
     def undo_operations(log_path: Path = Path("organizer_undo.json")) -> bool:
-        
         if not log_path.exists():
             print(f"No undo log found at: {log_path}")
             return False
@@ -230,7 +212,7 @@ class FileOrganizer:
             
             print(f"Undoing {len(operations)} operations...")
             
-            for op in reversed(operations):  
+            for op in reversed(operations):
                 src = Path(op['destination'])
                 dst = Path(op['source'])
                 
@@ -240,7 +222,6 @@ class FileOrganizer:
                     print(f"  Restored: {src.name}")
                 else:
                     print(f"  Warning: Source not found: {src}")
-            
             
             backup_name = f"organizer_undo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             log_path.rename(backup_name)
@@ -253,7 +234,6 @@ class FileOrganizer:
 
 
 def load_config(config_path: Path) -> Dict[str, Any]:
-   
     if not config_path.exists():
         raise ConfigError(
             f"Configuration file not found: {config_path}\n"
@@ -309,7 +289,6 @@ def setup_logging(verbose: bool = False) -> None:
 
 
 def create_sample_config(path: Path = Path("config.json")) -> None:
-    """Create a sample configuration file."""
     sample_config = {
         "file_types": {
             "images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"],
@@ -336,11 +315,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s ~/Downloads                    # Organize Downloads folder
-  %(prog)s ~/Downloads --dry-run          # Preview changes
-  %(prog)s ~/Downloads --recursive        # Include subdirectories
-  %(prog)s --undo                         # Undo last operation
-  %(prog)s --create-config                # Generate sample config
+  %(prog)s ~/Downloads                    
+  %(prog)s ~/Downloads --dry-run          
+  %(prog)s ~/Downloads --recursive        
+  %(prog)s --undo                         
+  %(prog)s --create-config                
         """
     )
     

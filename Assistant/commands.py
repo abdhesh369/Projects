@@ -14,14 +14,8 @@ import wave
 import tempfile
 
 def listen_for_note():
-    # Re-implementing a simple listen for note taking to avoid circular imports
-    # In a full app, this might be in a shared audio module
     recognizer = sr.Recognizer()
     try:
-        # Assuming we can reuse the same settings or import them
-        # For simplicity, using defaults here or if main.py passes the listener it's better.
-        # But this function was called within a command.
-        # Let's simple use a minimal version or ask user to speak clearly.
         with sr.Microphone() as source:
              print("Listening for note...")
              audio = recognizer.listen(source, timeout=5)
@@ -158,16 +152,9 @@ def cmd_close_calculator(text):
     os.system("taskkill /f /im calc.exe")
 
 def cmd_make_note(text):
-    # This requires listening again. 
-    # Since we are in commands.py, and listen() is in main.py, 
-    # we can either duplicate the listen logic or pass a listener.
-    # For now, let's use a simple input prompt via console or a local listen helper could be added.
-    # However, 'listen()' in main uses sounddevice/sr. 
-    # Let's assume we simply prompt for now or fail gracefully if we can't listen.
+    
     speak("What should the note say?")
     
-    # We'll use a local instance of recognizer for this specific command 
-    # to avoid circular import of 'listen' from main
     r = sr.Recognizer()
     try:
         with sr.Microphone() as source:
@@ -201,9 +188,7 @@ def cmd_exit(text):
     speak("Goodbye")
     exit()
 
-# Dispatcher Dictionary
-# Format: "keyword": function
-# We will iterate nicely to find matches
+
 COMMAND_MAP = {
     "your name": cmd_name,
     "old are you": cmd_age,
