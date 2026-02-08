@@ -11,23 +11,19 @@ import os
 
 
 class OrganizerError(Exception):
-    """Base exception for file organizer errors."""
     pass
 
 
 class ConfigError(OrganizerError):
-    """Configuration related errors."""
     pass
 
 
 class FileOperationError(OrganizerError):
-    """File operation errors."""
     pass
 
 
 @dataclass
 class OperationRecord:
-    """Record of a file move operation for potential undo."""
     source: Path
     destination: Path
     timestamp: str
@@ -157,7 +153,7 @@ class FileOrganizer:
             raise FileOperationError(f"Source path is not a directory: {source_path}")
         
         logging.info(f"Starting organization of: {source_path}")
-        print(f"\n📁 Organizing: {source_path}")
+        print(f"\n Organizing: {source_path}")
         
         if self.recursive:
             files_to_process = [
@@ -199,7 +195,7 @@ class FileOrganizer:
     def _print_summary(self) -> None:
         mode = "DRY RUN" if self.dry_run else "LIVE"
         print(f"\n{'='*50}")
-        print(f"📊 Operation Summary ({mode})")
+        print(f"Operation Summary ({mode})")
         print(f"{'='*50}")
         print(f"Files processed: {self.stats['processed']}")
         print(f"Files moved:     {self.stats['moved']}")
@@ -272,14 +268,12 @@ def load_config(config_path: Path) -> Dict[str, Any]:
     except Exception as e:
         raise ConfigError(f"Error reading config file: {e}")
     
-    # Validate structure
     if 'file_types' not in config:
         raise ConfigError("Config must contain 'file_types' key")
     
     if not isinstance(config['file_types'], dict):
         raise ConfigError("'file_types' must be a dictionary")
     
-    # Validate extensions format
     for category, extensions in config['file_types'].items():
         if not isinstance(extensions, list):
             raise ConfigError(
@@ -402,7 +396,6 @@ Examples:
     
     setup_logging(args.verbose)
     
-    # Handle special modes
     if args.create_config:
         create_sample_config()
         return 0
@@ -416,7 +409,6 @@ Examples:
     
     source_path = Path(args.source_directory).expanduser().resolve()
     
-    # Validate source
     if not source_path.exists():
         print(f"Error: Path does not exist: {source_path}")
         return 1
@@ -425,14 +417,12 @@ Examples:
         print(f"Error: Not a directory: {source_path}")
         return 1
     
-    # Load configuration
     try:
         config = load_config(Path(args.config))
     except ConfigError as e:
         print(f"Configuration Error: {e}")
         return 1
     
-    # Execute organization
     try:
         organizer = FileOrganizer(
             file_type_map=config['file_types'],
