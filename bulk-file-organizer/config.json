@@ -1,40 +1,92 @@
 {
-  "Images": [
-    ".jpeg",
-    ".jpg",
-    ".png",
-    ".gif",
-    ".svg",
-    ".bmp",
-    ".tiff"
-  ],
-  "Documents": [
-    ".pdf",
-    ".docx",
-    ".doc",
-    ".txt",
-    ".pptx",
-    ".xlsx",
-    ".odt"
-  ],
-  "Audio": [
-    ".mp3",
-    ".wav",
-    ".aac",
-    ".flac"
-  ],
-  "Video": [
-    ".mp4",
-    ".mov",
-    ".avi",
-    ".mkv",
-    ".webm"
-  ],
-  "Archives": [
-    ".zip",
-    ".rar",
-    ".tar",
-    ".gz",
-    ".7z"
-  ]
+  "file_types": {
+    "images": [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".bmp",
+      ".svg",
+      ".webp",
+      ".ico"
+    ],
+    "documents": [
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".txt",
+      ".rtf",
+      ".odt",
+      ".md"
+    ],
+    "spreadsheets": [
+      ".xls",
+      ".xlsx",
+      ".csv",
+      ".ods"
+    ],
+    "presentations": [
+      ".ppt",
+      ".pptx",
+      ".odp",
+      ".key"
+    ],
+    "archives": [
+      ".zip",
+      ".rar",
+      ".7z",
+      ".tar",
+      ".gz",
+      ".bz2",
+      ".xz"
+    ],
+    "audio": [
+      ".mp3",
+      ".wav",
+      ".flac",
+      ".aac",
+      ".ogg",
+      ".m4a",
+      ".wma"
+    ],
+    "video": [
+      ".mp4",
+      ".avi",
+      ".mkv",
+      ".mov",
+      ".wmv",
+      ".flv",
+      ".webm"
+    ],
+    "code": [
+      ".py",
+      ".js",
+      ".ts",
+      ".html",
+      ".css",
+      ".java",
+      ".cpp",
+      ".c",
+      ".h",
+      ".go",
+      ".rs"
+    ],
+    "executables": [
+      ".exe",
+      ".msi",
+      ".dmg",
+      ".pkg",
+      ".deb",
+      ".rpm",
+      ".appimage"
+    ],
+    "data": [
+      ".json",
+      ".xml",
+      ".yaml",
+      ".yml",
+      ".sql",
+      ".db"
+    ]
+  }
 }

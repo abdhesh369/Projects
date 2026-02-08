@@ -1,0 +1,12 @@
+# File Organizer Dependencies
+# Core functionality (usually included in Python standard library)
+# pathlib, json, logging, shutil, argparse, dataclasses, datetime, typing, os, sys
+
+# Progress bar (optional but recommended)
+tqdm>=4.60.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0        # For testing
+# black>=22.0.0        # Code formatting
+# mypy>=0.950          # Type checking
+# pylint>=2.13.0       # Linting
