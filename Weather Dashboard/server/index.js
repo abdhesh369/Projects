@@ -17,21 +17,47 @@ app.get('/api/weather', async (req, res) => {
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
 
     const weatherResponse = await axios.get(url);
+    const forecastData = weatherResponse.data;
 
-    const rawData = weatherResponse.data;
-    const processedWeatherData = {
-      city: rawData.name,
-      country: rawData.sys.country,
-      temperature: rawData.main.temp,
-      feelsLike: rawData.main.feels_like,
-      humidity: rawData.main.humidity,
-      windSpeed: rawData.wind.speed,
-      condition: rawData.weather[0].main,
-      description: rawData.weather[0].description,
-      icon: rawData.weather[0].icon,
+
+    const currentWeatherData = {
+      city: forecastData.city.name,
+      country: forecastData.city.country,
+      temperature: forecastData.list[0].main.temp,
+      feelsLike: forecastData.list[0].main.feels_like,
+      humidity: forecastData.list[0].main.humidity,
+      windSpeed: forecastData.list[0].wind.speed,
+      condition: forecastData.list[0].weather[0].main,
+      description: forecastData.list[0].weather[0].description,
+      icon: forecastData.list[0].weather[0].icon,
     };
 
-    res.json(processedWeatherData);
+    const dailyForecasts = {};
+    forecastData.list.forEach(item => {
+      const date = new Date(item.dt * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      
+      if (!dailyForecasts[date]) {
+        dailyForecasts[date] = {
+          day: new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
+          temps: [],
+          icons: new Set(),
+        };
+      }
+      
+      dailyForecasts[date].temps.push(item.main.temp);
+      dailyForecasts[date].icons.add(item.weather[0].icon);
+    });
+
+
+
+    const processedForecast = Object.values(dailyForecasts).map(dayData => ({
+      day: dayData.day,
+      tempHigh: Math.max(...dayData.temps),
+      tempLow: Math.min(...dayData.temps),
+      icon: dayData.icons.values().next().value, 
+    })).slice(0, 5);
+
+    res.json(processedForecast);
 
   } catch (error) {
     console.error('Error fetching weather data:', error.response ? error.response.data : error.message);
