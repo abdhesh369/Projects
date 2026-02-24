@@ -26,7 +26,7 @@ class Bird:
         self.sprite = sprite
         self.width = sprite.get_width()
         self.height = sprite.get_height()
-        
+           
         self.velocity = 0
         self.gravity = 0.5
         self.flap_strength = -8
