@@ -130,58 +130,24 @@ class Game:
         self.reset_game()
         
     def load_assets(self):
-        """Load all game assets"""
+        """Load all game assets procedurally in memory"""
         self.sprites = {}
         self.sounds = {}
         
-        if not os.path.exists("Public"):
-            os.makedirs("Public")
+        # Pure code generation instead of loading from files
+        self.sprites['bird'] = self.create_bird_sprite()
+        self.sprites['background'] = self.create_gradient_background()
+        self.sprites['pipe_top'], self.sprites['pipe_bottom'] = self.create_pipe_sprites()
+        self.sprites['ground'] = self.create_ground_sprite()
         
-        bird_path = "Public/bird.png"
-        bird_size = (34, 34)  # Target bird size
-        if os.path.exists(bird_path):
-            bird_img = pygame.image.load(bird_path).convert_alpha()
-            self.sprites['bird'] = pygame.transform.scale(bird_img, bird_size)
-        else:
-            self.sprites['bird'] = self.create_bird_sprite()
-            pygame.image.save(self.sprites['bird'], bird_path)
-        
-        bg_path = "Public/Background.jpg"
-        if os.path.exists(bg_path):
-            self.sprites['background'] = pygame.image.load(bg_path).convert()
-        else:
-            self.sprites['background'] = self.create_gradient_background()
-            pygame.image.save(self.sprites['background'], bg_path)
-        
-        pipe_path = "Public/Pipe.png"
-        if os.path.exists(pipe_path):
-            pipe_img = pygame.image.load(pipe_path).convert_alpha()
-            self.sprites['pipe_top'] = pygame.transform.rotate(pipe_img, 180)
-            self.sprites['pipe_bottom'] = pipe_img
-        else:
-            self.sprites['pipe_top'], self.sprites['pipe_bottom'] = self.create_pipe_sprites()
-            pygame.image.save(self.sprites['pipe_bottom'], pipe_path)
-        
-        ground_path = "Public/base.png"
-        if os.path.exists(ground_path):
-            self.sprites['ground'] = pygame.image.load(ground_path).convert_alpha()
-        else:
-            self.sprites['ground'] = self.create_ground_sprite()
-            pygame.image.save(self.sprites['ground'], ground_path)
-        
-        sound_files = {
-            'wing': 'Public/wing.mp3',
-            'point': 'Public/point.mp3',
-            'hit': 'Public/hit.mp3',
-            'die': 'Public/die.mp3'
+        # Disable sounds for pure code version (maintaining keys for compatibility)
+        self.sounds = {
+            'wing': None,
+            'point': None,
+            'hit': None,
+            'die': None
         }
-        
-        for name, path in sound_files.items():
-            if os.path.exists(path):
-                self.sounds[name] = pygame.mixer.Sound(path)
-            else:
-                self.sounds[name] = None
-    
+
     def create_bird_sprite(self):
         """Create a default bird sprite"""
         size = 34
@@ -236,20 +202,12 @@ class Game:
         return ground
     
     def load_high_score(self):
-        """Load high score from file"""
-        try:
-            if os.path.exists("highscore.json"):
-                with open("highscore.json", "r") as f:
-                    data = json.load(f)
-                    return data.get("high_score", 0)
-        except:
-            pass
+        """High score persists only during session in pure code version"""
         return 0
     
     def save_high_score(self):
-        """Save high score to file"""
-        with open("highscore.json", "w") as f:
-            json.dump({"high_score": self.high_score}, f)
+        """No disk persistence in pure code version"""
+        pass
     
     def reset_game(self):
         """Reset game state for new game"""
@@ -265,7 +223,6 @@ class Game:
     
     def spawn_pipe(self):
         """Spawn a new pipe pair"""
-        # FIX: Corrected gap calculation
         min_gap_y = PIPE_GAP // 2 + 50
         max_gap_y = int(SCREEN_HEIGHT * GROUND_Y_RATIO) - PIPE_GAP // 2 - 50
         gap_y = random.randint(min_gap_y, max_gap_y)
@@ -309,13 +266,11 @@ class Game:
         """Handle input events"""
         for event in pygame.event.get():
             if event.type == QUIT:
-                self.save_high_score()
                 pygame.quit()
                 sys.exit()
             
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    self.save_high_score()
                     pygame.quit()
                     sys.exit()
                 
@@ -325,37 +280,27 @@ class Game:
                         self.last_pipe_time = pygame.time.get_ticks()
                         self.grace_period = 30
                         self.bird.flap()
-                        if self.sounds['wing']:
-                            self.sounds['wing'].play()
                 
                 elif self.state == "PLAYING":
                     if event.key in (K_SPACE, K_UP):
-                        if self.bird.flap() and self.sounds['wing']:
-                            self.sounds['wing'].play()
+                        self.bird.flap()
                 
                 elif self.state == "GAME_OVER":
                     if event.key in (K_SPACE, K_RETURN):
                         self.reset_game()
                         self.state = "PLAYING"
                         self.bird.flap()
-                        if self.sounds['wing']:
-                            self.sounds['wing'].play()
             
             if event.type == MOUSEBUTTONDOWN:
                 if self.state == "MENU":
                     self.state = "PLAYING"
                     self.bird.flap()
-                    if self.sounds['wing']:
-                        self.sounds['wing'].play()
                 elif self.state == "PLAYING":
-                    if self.bird.flap() and self.sounds['wing']:
-                        self.sounds['wing'].play()
+                    self.bird.flap()
                 elif self.state == "GAME_OVER":
                     self.reset_game()
                     self.state = "PLAYING"
                     self.bird.flap()
-                    if self.sounds['wing']:
-                        self.sounds['wing'].play()
     
     def update(self):
         """Update game logic"""
@@ -374,8 +319,6 @@ class Game:
                     pipe.passed = True
                     self.score += 1
                     self.update_difficulty()
-                    if self.sounds['point']:
-                        self.sounds['point'].play()
             
             self.pipes = [p for p in self.pipes if not p.is_off_screen()]
             
@@ -387,15 +330,8 @@ class Game:
             if self.grace_period > 0:
                 self.grace_period -= 1
             elif self.check_collision():
-                if self.sounds['hit']:
-                    self.sounds['hit'].play()
-                if self.sounds['die']:
-                    self.sounds['die'].play()
-                
                 if self.score > self.high_score:
                     self.high_score = self.score
-                    self.save_high_score()
-                
                 self.state = "GAME_OVER"
     
     def draw(self):
@@ -469,6 +405,7 @@ class Game:
             self.update()
             self.draw()
             self.clock.tick(FPS)
+
 
 
 if __name__ == "__main__":
