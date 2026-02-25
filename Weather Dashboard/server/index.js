@@ -2,20 +2,23 @@ import connectDB from './db.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 connectDB();
 
 const app = express();
+app.use(express.json());
+
 
 app.get('/api/weather', async (req, res) => {
   try {
     const { city } = req.query;
-
+    
     if (!city) {
       return res.status(400).json({ message: 'City parameter is required' });
     }
-
+    
     const apiKey = process.env.WEATHER_API_KEY;
     const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`;
 
@@ -33,7 +36,7 @@ app.get('/api/weather', async (req, res) => {
       description: forecastData.list[0].weather[0].description,
       icon: forecastData.list[0].weather[0].icon,
     };
-
+    
     const dailyForecasts = {};
     forecastData.list.forEach(item => {
       const date = new Date(item.dt * 1000).toLocaleDateString('en-US', {
@@ -41,7 +44,7 @@ app.get('/api/weather', async (req, res) => {
         month: 'long',
         day: 'numeric'
       });
-
+      
       if (!dailyForecasts[date]) {
         dailyForecasts[date] = {
           day: new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -73,6 +76,9 @@ app.get('/api/weather', async (req, res) => {
     res.status(500).json({ message: 'An error occurred while fetching weather data.' });
   }
 });
+
+app.use('/api/auth', authRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
