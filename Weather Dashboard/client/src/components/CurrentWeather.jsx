@@ -1,3 +1,6 @@
+import { useContext } from 'react';
+import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
 import {
   WiDaySunny,
   WiCloudy,
@@ -6,6 +9,9 @@ import {
   WiThunderstorm,
   WiFog,
   WiDayCloudy,
+  WiHumidity,
+  WiStrongWind,
+  WiThermometer
 } from "react-icons/wi";
 
 const getWeatherIcon = (condition) => {
@@ -65,35 +71,45 @@ function CurrentWeather({ weatherData, onSetDefault, convertTemp, units }) {
   const unitLabel = units === 'metric' ? '°C' : '°F';
 
   return (
-    <>
-      <div className="current-weather">
-        <h2 className="city-name">
-          {city}, {country}
-        </h2>
-        <div className="weather-main">
-          <div className="weather-icon-large">
-            {getWeatherIcon(condition)}
-          </div>
-          <p className="temperature">{convertTemp(temperature)}{unitLabel}</p>
-        </div>
+    <div className="current-weather-card glass-card animate-fade">
+      <div className="weather-info-main">
+        <h2>{city}, {country}</h2>
+        <div className="temp-large">{convertTemp(temperature)}{unitLabel}</div>
         <p className="weather-description">{description}</p>
-        <div className="weather-details">
-          <p>Feels like: {convertTemp(feelsLike)}{unitLabel}</p>
-          <p>Humidity: {humidity}%</p>
-          <p>Wind: {windSpeed} m/s</p>
-        </div>
+
         <div className="weather-actions">
           <button onClick={() => onSetDefault(city)} className="btn-set-default">
-            Set as Default
+            Make Default
           </button>
           {isAuthenticated && (
-            <button onClick={handleAddToFavorites} className="btn-add-favorite">
-              Add to Favorites
+            <button onClick={handleAddToFavorites} className="btn-add-favorite search-button">
+              Save Favorite
             </button>
           )}
         </div>
       </div>
-    </>
+
+      <div className="weather-stats-column">
+        <div className="weather-icon-large">
+          {getWeatherIcon(condition)}
+        </div>
+
+        <div className="weather-stats">
+          <div className="stat-box">
+            <WiThermometer size={24} />
+            <span>Feels: {convertTemp(feelsLike)}{unitLabel}</span>
+          </div>
+          <div className="stat-box">
+            <WiHumidity size={24} />
+            <span>Hum: {humidity}%</span>
+          </div>
+          <div className="stat-box" style={{ gridColumn: 'span 2' }}>
+            <WiStrongWind size={24} />
+            <span>Wind: {windSpeed} m/s</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

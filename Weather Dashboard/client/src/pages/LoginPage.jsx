@@ -1,9 +1,10 @@
 // client/src/pages/LoginPage.js
 
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { WiDaySunny } from 'react-icons/wi';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -43,37 +44,53 @@ function LoginPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-form-container">
-        <h2>Welcome Back!</h2>
+    <div className="auth-page animate-fade">
+      <div className="auth-form-container glass-card">
+        <div className="auth-header">
+          <WiDaySunny size={64} color="#6366f1" className="animate-pulse-slow" />
+          <h1 className="brand-logo">SkyCast</h1>
+          <p className="auth-subtitle">Login to your dashboard</p>
+        </div>
+
         <form className="auth-form" onSubmit={onSubmit}>
-          {error && <p className="error-message">{error}</p>}
+          {error && <div className="error-badge">{error}</div>}
+
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
               id="email"
               name="email"
-              placeholder="Enter your email"
+              placeholder="name@example.com"
+              className="search-input"
               value={email}
               onChange={onChange}
               required
             />
           </div>
+
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
               name="password"
-              placeholder="Enter your password"
+              placeholder="••••••••"
+              className="search-input"
               value={password}
               onChange={onChange}
               required
             />
           </div>
-          <button type="submit" className="btn-submit">Login</button>
+
+          <button type="submit" className="search-button auth-submit">
+            Continue
+          </button>
         </form>
+
+        <div className="auth-footer">
+          <p>Don't have an account? <Link to="/register">Sign up</Link></p>
+        </div>
       </div>
     </div>
   );

@@ -97,49 +97,70 @@ function App() {
     );
   };
 
+  const getBackgroundClass = () => {
+    if (!weatherData) return 'bg-default';
+    const condition = weatherData.current.condition.toLowerCase();
+    if (condition.includes('clear')) return 'bg-clear';
+    if (condition.includes('cloud')) return 'bg-clouds';
+    if (condition.includes('rain') || condition.includes('drizzle')) return 'bg-rain';
+    if (condition.includes('snow')) return 'bg-snow';
+    return 'bg-default';
+  };
+
   return (
-    <>
+    <div className={`app-wrapper ${getBackgroundClass()}`}>
       <Navbar />
       <div className="App">
         <Routes>
           <Route
             path="/"
             element={
-              <>
+              <div className="dashboard-content animate-stagger">
                 <header>
                   <div className="header-top">
-                    <h1>Weather Dashboard</h1>
+                    <h1>SkyCast</h1>
                     <UnitToggle units={units} setUnits={setUnits} />
                   </div>
-                  <div className="search-container">
+                  <div className="search-container glass-card">
                     <SearchForm onSearch={(city) => fetchWeather({ city })} />
                     <button className="btn-location" onClick={handleUseMyLocation} title="Use my current location">
                       Use My Location
                     </button>
                   </div>
-                  {searchHistory.length > 0 && (
-                    <div className="search-history">
-                      <h3>Recent Searches</h3>
-                      <ul className="history-list">
-                        {searchHistory.map(city => (
-                          <li
-                            key={city}
-                            className="history-item"
-                            onClick={() => fetchWeather({ city })}
-                          >
-                            {city}
-                          </li>
-                        ))}
-                      </ul>
+
+                  <div className="dashboard-extras">
+                    {searchHistory.length > 0 && (
+                      <div className="search-history-section">
+                        <ul className="history-list">
+                          {searchHistory.map(city => (
+                            <li
+                              key={city}
+                              className="history-item"
+                              onClick={() => fetchWeather({ city })}
+                            >
+                              {city}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <FavoritesList onCityClick={(city) => fetchWeather({ city })} />
+                  </div>
+                </header>
+
+                <main>
+                  {loading && (
+                    <div className="loading-container glass-card animate-fade">
+                      <p className="loading-message">Fetching current conditions...</p>
                     </div>
                   )}
-                  <FavoritesList onCityClick={(city) => fetchWeather({ city })} />
-                </header>
-                <main>
-                  {loading && <p className="loading-message">Loading...</p>}
-                  {error && !loading && <p className="error-message">{error}</p>}
+                  {error && !loading && (
+                    <div className="error-container glass-card animate-fade">
+                      <p className="error-message">{error}</p>
+                    </div>
+                  )}
                   {weatherData && !loading && !error && (
-                    <>
+                    <div className="weather-grid">
                       <CurrentWeather
                         weatherData={weatherData.current}
                         onSetDefault={handleSetDefault}
@@ -151,24 +172,26 @@ function App() {
                         convertTemp={convertTemp}
                         units={units}
                       />
-                      {(() => {
-                        const chartData = weatherData.forecast.map(day => ({
-                          name: day.day,
-                          temperature: convertTemp(day.tempHigh),
-                        }));
-                        return <WeatherChart data={chartData} />;
-                      })()}
-                    </>
+                      <div className="chart-section glass-card animate-fade">
+                        {(() => {
+                          const chartData = weatherData.forecast.map(day => ({
+                            name: day.day,
+                            temperature: convertTemp(day.tempHigh),
+                          }));
+                          return <WeatherChart data={chartData} />;
+                        })()}
+                      </div>
+                    </div>
                   )}
                 </main>
-              </>
+              </div>
             }
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </div>
-    </>
+    </div>
   );
 }
 

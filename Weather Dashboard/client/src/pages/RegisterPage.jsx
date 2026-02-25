@@ -1,8 +1,9 @@
 // client/src/pages/RegisterPage.js
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { WiDaySunny } from 'react-icons/wi';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -30,10 +31,10 @@ function RegisterPage() {
 
     try {
       await axios.post('/api/auth/register', newUser);
-      setSuccess('Registration successful! Redirecting to login...');
+      setSuccess('Registration successful!');
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 1500);
     } catch (err) {
       if (err.response && err.response.data.message) {
         setError(err.response.data.message);
@@ -44,38 +45,56 @@ function RegisterPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-form-container">
-        <h2>Create Your Account</h2>
+    <div className="auth-page animate-fade">
+      <div className="auth-form-container glass-card">
+        <div className="auth-header">
+          <WiDaySunny size={64} color="#ec4899" className="animate-pulse-slow" />
+          <h1 className="brand-logo" style={{ background: 'linear-gradient(to right, #fff, #f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            SkyCast
+          </h1>
+          <p className="auth-subtitle">Create your account</p>
+        </div>
+
         <form className="auth-form" onSubmit={onSubmit}>
-          {error && <p className="error-message">{error}</p>}
-          {success && <p className="success-message">{success}</p>}
+          {error && <div className="error-badge">{error}</div>}
+          {success && <div className="success-badge">{success}</div>}
+
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="email"
               id="email"
               name="email"
-              placeholder="Enter your email"
+              placeholder="name@example.com"
+              className="search-input"
               value={email}
               onChange={onChange}
               required
             />
           </div>
+
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
               type="password"
               id="password"
               name="password"
-              placeholder="Enter your password"
+              placeholder="Choose a strong password"
+              className="search-input"
               value={password}
               onChange={onChange}
               required
             />
           </div>
-          <button type="submit" className="btn-submit">Register</button>
+
+          <button type="submit" className="search-button auth-submit" style={{ background: 'var(--secondary)' }}>
+            Join SkyCast
+          </button>
         </form>
+
+        <div className="auth-footer">
+          <p>Already have an account? <Link to="/login">Login</Link></p>
+        </div>
       </div>
     </div>
   );
