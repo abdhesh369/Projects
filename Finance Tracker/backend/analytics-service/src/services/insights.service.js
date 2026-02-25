@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const transactionClient = require('../utils/transactionClient');
 
 /**
@@ -53,7 +54,7 @@ const insightsService = {
 
             return insights;
         } catch (error) {
-            console.error('Insights generation error:', error);
+            logger.error('Insights generation error:', error);
             throw error;
         }
     }

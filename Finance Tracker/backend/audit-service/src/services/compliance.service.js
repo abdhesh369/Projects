@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const db = require('../config/db');
 
 const complianceService = {
@@ -7,7 +8,7 @@ const complianceService = {
             WHERE created_at < NOW() - (INTERVAL '1 day' * $1);
         `;
         const { rowCount } = await db.query(query, [daysRetention]);
-        console.log(`[Audit] Compliance: Purged ${rowCount} logs older than ${daysRetention} days.`);
+        logger.info(`[Audit] Compliance: Purged ${rowCount} logs older than ${daysRetention} days.`);
         return rowCount;
     },
 
@@ -18,7 +19,7 @@ const complianceService = {
             WHERE user_id = $1;
         `;
         const { rowCount } = await db.query(query, [userId]);
-        console.log(`[Audit] Compliance: Anonymized ${rowCount} logs for user ${userId}.`);
+        logger.info(`[Audit] Compliance: Anonymized ${rowCount} logs for user ${userId}.`);
         return rowCount;
     }
 };

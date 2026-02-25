@@ -9,9 +9,14 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       POSTGRES_DB: ${DB_NAME:-finance_tracker}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - ft-network
 
@@ -19,9 +24,14 @@ services:
     image: redis:7-alpine
     container_name: ft-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - ft-network
 
@@ -31,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: ft-auth-service
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       - PORT=3001
       - DB_HOST=postgres
@@ -40,9 +50,19 @@ services:
       - DB_NAME=${DB_NAME:-finance_tracker}
       - REDIS_HOST=redis
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -51,7 +71,7 @@ services:
       context: ./backend/account-service
     container_name: ft-account-service
     ports:
-      - "3002:3002"
+      - "127.0.0.1:3002:3002"
     environment:
       - PORT=3002
       - DB_HOST=postgres
@@ -59,7 +79,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -68,7 +94,7 @@ services:
       context: ./backend/analytics-service
     container_name: ft-analytics-service
     ports:
-      - "3003:3003"
+      - "127.0.0.1:3003:3003"
     environment:
       - PORT=3003
       - DB_HOST=postgres
@@ -76,7 +102,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -85,7 +117,7 @@ services:
       context: ./backend/audit-service
     container_name: ft-audit-service
     ports:
-      - "3004:3004"
+      - "127.0.0.1:3004:3004"
     environment:
       - PORT=3004
       - DB_HOST=postgres
@@ -93,7 +125,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -102,15 +140,24 @@ services:
       context: ./backend/banking-integration-service
     container_name: ft-banking-service
     ports:
-      - "3005:3005"
+      - "127.0.0.1:3005:3005"
     environment:
       - PORT=3005
       - DB_HOST=postgres
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - PLAID_CLIENT_ID=${PLAID_CLIENT_ID}
+      - PLAID_SECRET=${PLAID_SECRET}
+      - PLAID_ENV=${PLAID_ENV}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -119,7 +166,7 @@ services:
       context: ./backend/budget-service
     container_name: ft-budget-service
     ports:
-      - "3006:3006"
+      - "127.0.0.1:3006:3006"
     environment:
       - PORT=3006
       - DB_HOST=postgres
@@ -127,7 +174,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -136,15 +189,31 @@ services:
       context: ./backend/notification-service
     container_name: ft-notification-service
     ports:
-      - "3007:3007"
+      - "127.0.0.1:3007:3007"
     environment:
       - PORT=3007
       - DB_HOST=postgres
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -153,7 +222,7 @@ services:
       context: ./backend/reporting-service
     container_name: ft-reporting-service
     ports:
-      - "3008:3008"
+      - "127.0.0.1:3008:3008"
     environment:
       - PORT=3008
       - DB_HOST=postgres
@@ -161,7 +230,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -170,7 +245,7 @@ services:
       context: ./backend/transaction-service
     container_name: ft-transaction-service
     ports:
-      - "3009:3009"
+      - "127.0.0.1:3009:3009"
     environment:
       - PORT=3009
       - DB_HOST=postgres
@@ -178,7 +253,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -187,15 +268,22 @@ services:
       context: ./backend/user-service
     container_name: ft-user-service
     ports:
-      - "3010:3010"
+      - "127.0.0.1:3010:3010"
     environment:
       - PORT=3010
       - DB_HOST=postgres
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 
@@ -218,9 +306,12 @@ services:
       - TRANSACTIONS_SERVICE_URL=http://transaction-service:3009
       - USERS_SERVICE_URL=http://user-service:3010
     depends_on:
-      - auth-service
-      - account-service
-      - analytics-service
+      auth-service:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+      analytics-service:
+        condition: service_healthy
     networks:
       - ft-network
 

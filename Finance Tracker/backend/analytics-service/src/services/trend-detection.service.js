@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const transactionClient = require('../utils/transactionClient');
 
 /**
@@ -50,7 +51,7 @@ const trendDetectionService = {
 
             return trends;
         } catch (error) {
-            console.error('Trend detection error:', error);
+            logger.error('Trend detection error:', error);
             throw error;
         }
     }

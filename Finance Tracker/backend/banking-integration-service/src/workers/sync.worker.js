@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const plaidSyncService = require('../services/plaidSync.service');
 const encryptionService = require('../services/encryption.service');
 
@@ -13,18 +14,18 @@ const syncWorker = {
      * @param {string|null} cursor - The last sync cursor for incremental transaction sync
      */
     async runFullSync(encryptedAccessToken, userId, cursor = null) {
-        console.log(`[SyncWorker] Starting full sync for user ${userId}`);
+        logger.info(`[SyncWorker] Starting full sync for user ${userId}`);
 
         try {
             const accessToken = encryptionService.decrypt(encryptedAccessToken);
 
             // 1. Sync accounts
             const accounts = await plaidSyncService.syncAccounts(accessToken, userId);
-            console.log(`[SyncWorker] Account sync complete: ${accounts.length} accounts`);
+            logger.info(`[SyncWorker] Account sync complete: ${accounts.length} accounts`);
 
             // 2. Sync transactions
             const txnResult = await plaidSyncService.syncTransactions(accessToken, userId, cursor);
-            console.log(`[SyncWorker] Transaction sync complete: +${txnResult.added} ~${txnResult.modified} -${txnResult.removed}`);
+            logger.info(`[SyncWorker] Transaction sync complete: +${txnResult.added} ~${txnResult.modified} -${txnResult.removed}`);
 
             return {
                 success: true,
@@ -32,7 +33,7 @@ const syncWorker = {
                 transactions: txnResult,
             };
         } catch (error) {
-            console.error(`[SyncWorker] Sync failed for user ${userId}:`, error.message);
+            logger.error(`[SyncWorker] Sync failed for user ${userId}:`, error.message);
             return { success: false, error: error.message };
         }
     }

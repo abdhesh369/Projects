@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const { authenticator } = require('otplib');
 const qrcode = require('qrcode');
 const redis = require('../config/redis');
@@ -6,7 +7,7 @@ const PENDING_MFA_TTL = 300; // 5 minutes
 
 const mfaService = {
     async generateSecret(userId) {
-        console.log(`[Auth] MFA: Generating secret for user ${userId}`);
+        logger.info(`[Auth] MFA: Generating secret for user ${userId}`);
         const secret = authenticator.generateSecret();
         const otpauth = authenticator.keyuri(userId, 'FinanceTracker', secret);
         const qrCode = await qrcode.toDataURL(otpauth);
@@ -29,10 +30,10 @@ const mfaService = {
     },
 
     async verifyCode(userId, code, secret) {
-        console.log(`[Auth] MFA: Verifying code for user ${userId}`);
+        logger.info(`[Auth] MFA: Verifying code for user ${userId}`);
 
         if (!secret) {
-            console.error('[Auth] MFA: Verification failed - secret missing');
+            logger.error('[Auth] MFA: Verification failed - secret missing');
             return false;
         }
 
@@ -42,8 +43,11 @@ const mfaService = {
         });
     },
 
-    async enroll(userId) {
-        console.log(`[Auth] MFA: Enrolling user ${userId}`);
+    async enroll(userId, secret) {
+        logger.info(`[Auth] MFA: Enrolling user ${userId}`);
+        const User = require('../models/user.model');
+        await User.update(userId, { mfa_enabled: true, mfa_secret: secret });
+        await this.clearPendingSecret(userId);
         return true;
     }
 };

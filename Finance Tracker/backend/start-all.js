@@ -1,3 +1,4 @@
+const logger = require('./shared/utils/logger');
 const { spawn } = require('child_process');
 const path = require('path');
 
@@ -16,10 +17,10 @@ const services = [
 ];
 
 async function startServices() {
-    console.log('Starting all services sequentially...');
+    logger.info('Starting all services sequentially...');
 
     for (const service of services) {
-        console.log(`[STARTING] ${service.name}...`);
+        logger.info(`[STARTING] ${service.name}...`);
         const proc = spawn('npm', ['start'], {
             cwd: path.resolve(process.cwd(), service.dir),
             shell: true,
@@ -27,14 +28,14 @@ async function startServices() {
         });
 
         proc.on('error', (err) => {
-            console.error(`[ERROR] ${service.name}: ${err.message}`);
+            logger.error(`[ERROR] ${service.name}: ${err.message}`);
         });
 
         // Wait a bit between each service
         await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
-    console.log('All services have been triggered.');
+    logger.info('All services have been triggered.');
 }
 
 startServices();

@@ -1,3 +1,4 @@
+const logger = require('../../shared/utils/logger');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3003;
 
 if (!process.env.INTERNAL_SERVICE_TOKEN) {
-    console.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
+    logger.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
     process.exit(1);
 }
 
@@ -26,5 +27,5 @@ const analyticsRoutes = require('./routes/analytics.routes');
 app.use('/', analyticsRoutes);
 
 app.listen(PORT, () => {
-    console.log(`Analytics Service running on port ${PORT}`);
+    logger.info(`Analytics Service running on port ${PORT}`);
 });

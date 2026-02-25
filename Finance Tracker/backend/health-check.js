@@ -1,3 +1,4 @@
+const logger = require('./shared/utils/logger');
 const axios = require('axios');
 
 const services = [
@@ -15,16 +16,16 @@ const services = [
 ];
 
 async function runHealthChecks() {
-    console.log('--- Integrated Health Checks ---');
+    logger.info('--- Integrated Health Checks ---');
     for (const service of services) {
         try {
             const response = await axios.get(service.url);
-            console.log(`[OK] ${service.name} (${service.url}): ${response.data.status || 'UP'}`);
+            logger.info(`[OK] ${service.name} (${service.url}): ${response.data.status || 'UP'}`);
         } catch (error) {
-            console.log(`[FAILED] ${service.name} (${service.url}): ${error.message}`);
+            logger.info(`[FAILED] ${service.name} (${service.url}): ${error.message}`);
         }
     }
-    console.log('--------------------------------');
+    logger.info('--------------------------------');
 }
 
 runHealthChecks();

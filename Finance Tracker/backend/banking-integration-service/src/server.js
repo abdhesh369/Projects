@@ -1,3 +1,4 @@
+const logger = require('../../shared/utils/logger');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3005;
 
 if (!process.env.INTERNAL_SERVICE_TOKEN) {
-    console.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
+    logger.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
     process.exit(1);
 }
 
@@ -27,5 +28,5 @@ const bankingRoutes = require('./routes/banking.routes');
 app.use('/', bankingRoutes);
 
 app.listen(PORT, () => {
-    console.log(`Banking Integration Service running on port ${PORT}`);
+    logger.info(`Banking Integration Service running on port ${PORT}`);
 });

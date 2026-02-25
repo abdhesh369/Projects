@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 /**
  * Scheduling Service
  * Manages recurring report delivery schedules
@@ -28,7 +29,7 @@ const schedulingService = {
                 createdAt: new Date().toISOString()
             };
         } catch (error) {
-            console.error('Report scheduling error:', error);
+            logger.error('Report scheduling error:', error);
             throw error;
         }
     },

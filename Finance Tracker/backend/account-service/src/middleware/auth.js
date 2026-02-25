@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
@@ -6,7 +7,7 @@ const authMiddleware = (req, res, next) => {
     const INTERNAL_SECRET = process.env.INTERNAL_SERVICE_TOKEN;
 
     if (!INTERNAL_SECRET) {
-        console.error('FATAL: INTERNAL_SERVICE_TOKEN not configured in service');
+        logger.error('FATAL: INTERNAL_SERVICE_TOKEN not configured in service');
         return res.status(500).json({ error: 'Internal server configuration error' });
     }
 

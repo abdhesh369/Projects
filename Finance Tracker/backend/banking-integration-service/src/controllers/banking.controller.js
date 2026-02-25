@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const connectionService = require('../services/connection.service');
 const encryptionService = require('../services/encryption.service');
 const webhookService = require('../services/webhook.service');
@@ -10,7 +11,7 @@ const bankingController = {
             const token = await connectionService.createLinkToken(userId);
             res.status(200).json(token);
         } catch (error) {
-            console.error('[Banking] getLinkToken error:', error.message);
+            logger.error('[Banking] getLinkToken error:', error.message);
             res.status(500).json({ error: 'Failed to generate link token' });
         }
     },
@@ -26,7 +27,7 @@ const bankingController = {
 
             // Trigger initial sync in the background
             syncWorker.runFullSync(encryptedAccessToken, userId).catch(err => {
-                console.error('[Banking] Background sync failed:', err.message);
+                logger.error('[Banking] Background sync failed:', err.message);
             });
 
             res.status(200).json({
@@ -34,7 +35,7 @@ const bankingController = {
                 itemId: tokens.item_id,
             });
         } catch (error) {
-            console.error('[Banking] handlePublicToken error:', error.message);
+            logger.error('[Banking] handlePublicToken error:', error.message);
             res.status(500).json({ error: 'Failed to link account' });
         }
     },
@@ -51,7 +52,7 @@ const bankingController = {
             const result = await syncWorker.runFullSync(encryptedAccessToken, userId, cursor);
             res.status(200).json(result);
         } catch (error) {
-            console.error('[Banking] manualSync error:', error.message);
+            logger.error('[Banking] manualSync error:', error.message);
             res.status(500).json({ error: 'Failed to sync accounts' });
         }
     },
@@ -63,11 +64,11 @@ const bankingController = {
                 return res.status(401).json({ error: 'Missing webhook signature' });
             }
 
-            console.log('[Banking] Webhook signature received, processing payload...');
+            logger.info('[Banking] Webhook signature received, processing payload...');
             const result = await webhookService.handleWebhook(req.body);
             res.status(200).json(result);
         } catch (error) {
-            console.error('[Banking] Webhook error:', error.message);
+            logger.error('[Banking] Webhook error:', error.message);
             res.status(500).json({ error: 'Failed to process webhook' });
         }
     }

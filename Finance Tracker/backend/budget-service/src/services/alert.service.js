@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const budgetService = require('./budget.service');
 
 /**
@@ -39,7 +40,7 @@ const alertService = {
             // For now, we return them to the caller
             return alerts;
         } catch (error) {
-            console.error('Budget threshold check error:', error);
+            logger.error('Budget threshold check error:', error);
             throw error;
         }
     }

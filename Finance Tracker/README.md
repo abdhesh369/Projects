@@ -20,16 +20,16 @@ The project follows a monorepo-style structure, housing both the frontend and ba
 Finance Tracker/
 ├── backend/                  # Node.js/Express Microservices
 │   ├── account-service       # Port 3002: Manages user bank accounts
-│   ├── analytics-service     # Port 3010: Handles complex data analysis
-│   ├── api-gateway           # Port 3000: Routes frontend requests to microservices
+│   ├── analytics-service     # Port 3003: Handles complex data analysis
+│   ├── api-gateway           # Port 5000: Routes frontend requests to microservices
 │   ├── audit-service         # Port 3004: Logs system events and user actions
 │   ├── auth-service          # Port 3001: Handles JWT login, registration, MFA
 │   ├── banking-integration-service # Port 3005: Plaid API interactions
-│   ├── budget-service        # Port 3007: Manages budget limits and tracking
-│   ├── notification-service  # Port 3006: In-app and email notifications
+│   ├── budget-service        # Port 3006: Manages budget limits and tracking
+│   ├── notification-service  # Port 3007: In-app and email notifications
 │   ├── reporting-service     # Port 3008: Generates data for dashboard charts
 │   ├── transaction-service   # Port 3009: Handles income, expenses, transfers
-│   └── user-service          # Port 3003: Manages user profiles and preferences
+│   └── user-service          # Port 3010: Manages user profiles and preferences
 ├── frontend/                 # React/Next.js Application
 │   └── web-app/              # Next.js Pages router frontend
 ├── shared/                   # Shared types, utilities, or configurations
@@ -49,7 +49,7 @@ Built to be fast and responsive, utilizing modern React ecosystems.
 
 ### Backend (`backend/`)
 The backend is built around a highly scalable microservices architecture utilizing Node.js and Express. Each service runs independently and manages its own domain logic.
-- **API Gateway:** Centralized entry point on Port 3000 that proxies requests to the appropriate underlying microservice.
+- **API Gateway:** Centralized entry point on Port 5000 that proxies requests to the appropriate underlying microservice.
 - **Database:** Relies on **PostgreSQL** (interfaced through the `pg` package).
 - **Security:** Secured via `helmet`, CORS setup, and JSON Web Tokens (`jsonwebtoken`).
 
@@ -114,7 +114,7 @@ The backend is built around a highly scalable microservices architecture utilizi
 3. **Configure Environment Variables:**
    Create a `.env.local` based on required API endpoints. For example:
    ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3000  # Pointing to the API Gateway
+   NEXT_PUBLIC_API_URL=http://localhost:5000  # Pointing to the API Gateway
    NEXT_PUBLIC_PLAID_ENV=sandbox
    ```
 4. **Start the development server:**
@@ -122,7 +122,7 @@ The backend is built around a highly scalable microservices architecture utilizi
    npm run dev
    ```
 5. **Access the application:**
-   Open your browser and navigate to `http://localhost:3011` to begin using the Finance Tracker.
+   Open your browser and navigate to `http://localhost:3000` to begin using the Finance Tracker.
 
 ## Deployment Using Docker (Optional)
 
@@ -135,4 +135,4 @@ This command builds the images for all backend microservices, the frontend web a
 
 ---
 
-*This application is continually evolving. Check the repository for recent commits and updates.*
+*Built with security and scalability in mind, Finance Tracker represents a modern standard for modular financial tools. Refer to the codebase for production deployment specifications.*

@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const emailService = require('../services/email.service');
 const pushService = require('../services/push.service');
 const inAppService = require('../services/in-app.service');
@@ -31,7 +32,7 @@ const notificationController = {
 
             res.status(200).json(result);
         } catch (error) {
-            console.error('[Notification] Error sending notification:', error);
+            logger.error('[Notification] Error sending notification:', error);
             res.status(500).json({ error: 'Failed to send notification' });
         }
     },
@@ -42,7 +43,7 @@ const notificationController = {
             const notifications = await inAppService.getUserNotifications(userId);
             res.status(200).json(notifications);
         } catch (error) {
-            console.error('[Notification] Error listing notifications:', error);
+            logger.error('[Notification] Error listing notifications:', error);
             res.status(500).json({ error: 'Failed to list notifications' });
         }
     },
@@ -54,7 +55,7 @@ const notificationController = {
             const notification = await inAppService.markAsRead(id, userId);
             res.status(200).json(notification);
         } catch (error) {
-            console.error('[Notification] Error marking notification as read:', error);
+            logger.error('[Notification] Error marking notification as read:', error);
             res.status(500).json({ error: 'Failed to mark notification as read' });
         }
     }

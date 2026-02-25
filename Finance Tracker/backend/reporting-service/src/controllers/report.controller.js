@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const reportGenerationService = require('../services/report-generation.service');
 const exportService = require('../services/export.service');
 const schedulingService = require('../services/scheduling.service');
@@ -21,7 +22,7 @@ const reportController = {
                 period: { startDate, endDate }
             });
         } catch (error) {
-            console.error('[Reporting] Report generation error:', error);
+            logger.error('[Reporting] Report generation error:', error);
             res.status(500).json({ error: 'Failed to generate report' });
         }
     },
@@ -41,7 +42,7 @@ const reportController = {
                 return res.status(400).json({ error: 'Invalid format. Use csv or pdf.' });
             }
         } catch (error) {
-            console.error('[Reporting] Export generation error:', error);
+            logger.error('[Reporting] Export generation error:', error);
             res.status(500).json({ error: 'Failed to export report' });
         }
     },
@@ -52,7 +53,7 @@ const reportController = {
             const schedule = await schedulingService.scheduleReport(userId, req.body);
             res.status(201).json(schedule);
         } catch (error) {
-            console.error('[Reporting] Schedule report error:', error);
+            logger.error('[Reporting] Schedule report error:', error);
             res.status(500).json({ error: 'Failed to schedule report' });
         }
     }

@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const plaidClient = require('../integrations/plaid.integration');
 const axios = require('axios');
 
@@ -11,7 +12,7 @@ const plaidSyncService = {
      * to the account-service.
      */
     async syncAccounts(accessToken, userId) {
-        console.log(`[PlaidSync] Syncing accounts for user ${userId}`);
+        logger.info(`[PlaidSync] Syncing accounts for user ${userId}`);
         try {
             const response = await plaidClient.accountsGet({
                 access_token: accessToken,
@@ -38,10 +39,10 @@ const plaidSyncService = {
                 headers: { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN }
             });
 
-            console.log(`[PlaidSync] Synced ${accounts.length} accounts for user ${userId}`);
+            logger.info(`[PlaidSync] Synced ${accounts.length} accounts for user ${userId}`);
             return accounts;
         } catch (error) {
-            console.error('[PlaidSync] Error syncing accounts:', error.response ? error.response.data : error.message);
+            logger.error('[PlaidSync] Error syncing accounts:', error.response ? error.response.data : error.message);
             throw error;
         }
     },
@@ -52,7 +53,7 @@ const plaidSyncService = {
      * Uses the Plaid transactions/sync endpoint for incremental updates.
      */
     async syncTransactions(accessToken, userId, cursor = null) {
-        console.log(`[PlaidSync] Syncing transactions for user ${userId}`);
+        logger.info(`[PlaidSync] Syncing transactions for user ${userId}`);
         const allAdded = [];
         const allModified = [];
         const allRemoved = [];
@@ -108,7 +109,7 @@ const plaidSyncService = {
                 headers: { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN }
             });
 
-            console.log(`[PlaidSync] Synced ${formattedTransactions.length} added, ${allModified.length} modified, ${allRemoved.length} removed transactions for user ${userId}`);
+            logger.info(`[PlaidSync] Synced ${formattedTransactions.length} added, ${allModified.length} modified, ${allRemoved.length} removed transactions for user ${userId}`);
             return {
                 added: formattedTransactions.length,
                 modified: allModified.length,
@@ -116,7 +117,7 @@ const plaidSyncService = {
                 cursor: nextCursor,
             };
         } catch (error) {
-            console.error('[PlaidSync] Error syncing transactions:', error.response ? error.response.data : error.message);
+            logger.error('[PlaidSync] Error syncing transactions:', error.response ? error.response.data : error.message);
             throw error;
         }
     }

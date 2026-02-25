@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 
@@ -39,7 +40,7 @@ const realtimeService = {
 
         io.on('connection', (socket) => {
             const userId = socket.userId;
-            console.log(`[Realtime] User ${userId} connected (socket: ${socket.id})`);
+            logger.info(`[Realtime] User ${userId} connected (socket: ${socket.id})`);
 
             // Track the user's socket
             if (!userSockets.has(userId)) {
@@ -51,7 +52,7 @@ const realtimeService = {
 
             // Handle disconnection
             socket.on('disconnect', () => {
-                console.log(`[Realtime] User ${userId} disconnected (socket: ${socket.id})`);
+                logger.info(`[Realtime] User ${userId} disconnected (socket: ${socket.id})`);
                 const sockets = userSockets.get(userId);
                 if (sockets) {
                     sockets.delete(socket.id);
@@ -63,11 +64,11 @@ const realtimeService = {
 
             // Handle marking notifications as read from client
             socket.on('mark_read', (notificationId) => {
-                console.log(`[Realtime] User ${userId} marked notification ${notificationId} as read`);
+                logger.info(`[Realtime] User ${userId} marked notification ${notificationId} as read`);
             });
         });
 
-        console.log('[Realtime] Socket.IO initialized');
+        logger.info('[Realtime] Socket.IO initialized');
         return io;
     },
 
@@ -80,7 +81,7 @@ const realtimeService = {
             return;
         }
         io.to(`user:${userId}`).emit(event, data);
-        console.log(`[Realtime] Sent "${event}" to user ${userId}`);
+        logger.info(`[Realtime] Sent "${event}" to user ${userId}`);
     },
 
     /**

@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
@@ -14,16 +15,21 @@ const authMiddleware = (req, res, next) => {
         return next();
     }
 
+    let token;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'No token provided' });
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.accessToken) {
+        token = req.cookies.accessToken; // Issue #16
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
     const JWT_SECRET = process.env.JWT_SECRET;
 
     if (!JWT_SECRET) {
-        console.error('FATAL: JWT_SECRET not configured in API Gateway');
+        logger.error('FATAL: JWT_SECRET not configured in API Gateway');
         return res.status(500).json({ error: 'Internal server configuration error' });
     }
 
@@ -37,7 +43,7 @@ const authMiddleware = (req, res, next) => {
 
         next();
     } catch (error) {
-        console.error('API Gateway Auth Error:', error.message);
+        logger.error('API Gateway Auth Error:', error.message);
         return res.status(401).json({ error: 'Invalid or expired token' });
     }
 };

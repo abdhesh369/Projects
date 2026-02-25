@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const Stripe = require('stripe');
 const User = require('../models/user.model');
 
@@ -7,12 +8,12 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Fix Issue #4: Enforce missing Stripe keys
 if (!STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.startsWith('sk_test_placeholder')) {
-    console.error('FATAL: STRIPE_SECRET_KEY is not configured or using placeholder.');
+    logger.error('FATAL: STRIPE_SECRET_KEY is not configured or using placeholder.');
     process.exit(1);
 }
 
 if (!STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.startsWith('whsec_placeholder')) {
-    console.error('FATAL: STRIPE_WEBHOOK_SECRET is not configured or using placeholder.');
+    logger.error('FATAL: STRIPE_WEBHOOK_SECRET is not configured or using placeholder.');
     process.exit(1);
 }
 
@@ -187,7 +188,7 @@ const stripeService = {
                 break;
 
             default:
-                console.log(`[Stripe] Unhandled event type: ${event.type}`);
+                logger.info(`[Stripe] Unhandled event type: ${event.type}`);
         }
 
         return { received: true };

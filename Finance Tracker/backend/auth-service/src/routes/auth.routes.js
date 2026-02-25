@@ -11,5 +11,7 @@ router.get('/sessions', authController.getSessions);
 router.post('/mfa/setup', authController.setupMFA);
 router.post('/mfa/verify', authController.verifyMFA);
 router.post('/mfa/disable', authController.disableMFA);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;

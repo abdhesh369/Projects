@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const db = require('../config/db');
 
 const inAppService = {
@@ -11,10 +12,10 @@ const inAppService = {
 
         try {
             const { rows } = await db.query(query, values);
-            console.log(`[Notification] Saved In-App Notification for User ${userId}`);
+            logger.info(`[Notification] Saved In-App Notification for User ${userId}`);
             return rows[0];
         } catch (error) {
-            console.error('[Notification] DB Error saving in-app notification:', error);
+            logger.error('[Notification] DB Error saving in-app notification:', error);
             throw error;
         }
     },

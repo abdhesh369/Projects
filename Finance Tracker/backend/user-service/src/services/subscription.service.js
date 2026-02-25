@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const stripeService = require('./stripe.service');
 const User = require('../models/user.model');
 
@@ -13,7 +14,7 @@ const subscriptionService = {
                     details = subscriptions[0];
                 }
             } catch (error) {
-                console.error('Error fetching subscription details from Stripe:', error);
+                logger.error('Error fetching subscription details from Stripe:', error);
                 // Non-fatal, return DB status
             }
         }

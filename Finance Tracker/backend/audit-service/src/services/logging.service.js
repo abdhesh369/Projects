@@ -1,13 +1,14 @@
+const logger = require('../../../shared/utils/logger');
 const AuditLog = require('../models/audit-log.model');
 
 const loggingService = {
     async logEvent(eventData) {
         try {
             const log = await AuditLog.create(eventData);
-            console.log(`[Audit] Event logged: ${log.action} for entity ${log.entity_type}:${log.entity_id}`);
+            logger.info(`[Audit] Event logged: ${log.action} for entity ${log.entity_type}:${log.entity_id}`);
             return log;
         } catch (error) {
-            console.error('[Audit] Failed to log event:', error);
+            logger.error('[Audit] Failed to log event:', error);
             throw error;
         }
     },

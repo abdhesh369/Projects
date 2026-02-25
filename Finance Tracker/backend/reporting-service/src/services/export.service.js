@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
 
@@ -21,7 +22,7 @@ const exportService = {
             res.attachment('transactions.csv');
             res.send(csv);
         } catch (err) {
-            console.error('CSV Generation Error:', err);
+            logger.error('CSV Generation Error:', err);
             res.status(500).json({ error: 'Failed to generate CSV' });
         }
     },
@@ -49,7 +50,7 @@ const exportService = {
 
             doc.end();
         } catch (err) {
-            console.error('PDF Generation Error:', err);
+            logger.error('PDF Generation Error:', err);
             res.status(500).json({ error: 'Failed to generate PDF' });
         }
     }

@@ -59,6 +59,15 @@ const schemas = {
         currency: Joi.string().length(3).uppercase().default('USD'),
         institution: Joi.string().allow('', null)
     }),
+    'PUT:/api/accounts/:id': Joi.object({
+        name: Joi.string().min(2).optional(),
+        type: Joi.string().valid('checking', 'savings', 'credit', 'investment', 'other').optional(),
+        balance: Joi.number().optional(),
+        currency: Joi.string().length(3).uppercase().optional(),
+        institution: Joi.string().allow('', null).optional(),
+        color: Joi.string().optional(),
+        icon: Joi.string().optional()
+    }),
     'POST:/api/budget': Joi.object({
         name: Joi.string().required(),
         amount: Joi.number().positive().required(),
@@ -81,7 +90,7 @@ const validateRequest = (req, res, next) => {
 
     // Simple dynamic segment matching: replace UUID-like or Numeric segments with ':id'
     // Matches /api/transactions/123 to /api/transactions/:id
-    const sanitizedPath = fullPath.replace(/\/\d+$/, '/:id').replace(/\/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i, '/:id');
+    const sanitizedPath = fullPath.replace(/\/\d+/g, '/:id').replace(/\/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/gi, '/:id');
 
     const schemaKey = `${method}:${sanitizedPath}`;
     const schema = schemas[schemaKey] || schemas[`${method}:${req.baseUrl}`];

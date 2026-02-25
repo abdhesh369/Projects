@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const User = require('../models/user.model');
 
 const userController = {
@@ -9,7 +10,7 @@ const userController = {
             }
             res.status(200).json(user);
         } catch (error) {
-            console.error('Fetch profile error:', error);
+            logger.error('Fetch profile error:', error);
             res.status(500).json({ error: 'Failed to fetch profile' });
         }
     },
@@ -24,7 +25,7 @@ const userController = {
             const updatedUser = await User.updateProfile(req.user.id, { firstName, lastName });
             res.status(200).json(updatedUser);
         } catch (error) {
-            console.error('Update profile error:', error);
+            logger.error('Update profile error:', error);
             res.status(500).json({ error: 'Failed to update profile' });
         }
     },
@@ -40,7 +41,7 @@ const userController = {
             const updatedUser = await User.updatePreferences(req.user.id, preferences);
             res.status(200).json(updatedUser);
         } catch (error) {
-            console.error('Update preferences error:', error);
+            logger.error('Update preferences error:', error);
             res.status(500).json({ error: 'Failed to update preferences' });
         }
     }

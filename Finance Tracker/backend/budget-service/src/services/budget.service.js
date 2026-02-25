@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const Budget = require('../models/budget.model');
 const axios = require('axios');
 
@@ -55,7 +56,7 @@ const budgetService = {
                 );
                 currentSpending = response.data?.current_spending || 0;
             } catch (error) {
-                console.error(`[Budget Service] Failed to fetch spending for category ${budget.category_id}:`, error.message);
+                logger.error(`[Budget Service] Failed to fetch spending for category ${budget.category_id}:`, error.message);
                 // Fallback to 0 if transaction service is unavailable
             }
 

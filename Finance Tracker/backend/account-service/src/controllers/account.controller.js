@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const Account = require('../models/account.model');
 
 const accountController = {
@@ -6,9 +7,6 @@ const accountController = {
             const userId = req.user.id;
             const { name, type, balance, currency, institution, color, icon } = req.body;
 
-            if (!name || !type) {
-                return res.status(400).json({ error: 'Name and type are required' });
-            }
 
             const account = await Account.create({
                 userId,
@@ -23,7 +21,7 @@ const accountController = {
 
             res.status(201).json(account);
         } catch (error) {
-            console.error('Create account error:', error);
+            logger.error('Create account error:', error);
             res.status(500).json({ error: 'Failed to create account' });
         }
     },
@@ -34,7 +32,7 @@ const accountController = {
             const accounts = await Account.findAllByUserId(userId);
             res.status(200).json(accounts);
         } catch (error) {
-            console.error('Get all accounts error:', error);
+            logger.error('Get all accounts error:', error);
             res.status(500).json({ error: 'Failed to fetch accounts' });
         }
     },
@@ -51,7 +49,7 @@ const accountController = {
 
             res.status(200).json(account);
         } catch (error) {
-            console.error('Get account error:', error);
+            logger.error('Get account error:', error);
             res.status(500).json({ error: 'Failed to fetch account' });
         }
     },
@@ -70,7 +68,7 @@ const accountController = {
 
             res.status(200).json(account);
         } catch (error) {
-            console.error('Update account error:', error);
+            logger.error('Update account error:', error);
             res.status(500).json({ error: 'Failed to update account' });
         }
     },
@@ -87,7 +85,7 @@ const accountController = {
 
             res.status(200).json({ message: 'Account deleted successfully' });
         } catch (error) {
-            console.error('Delete account error:', error);
+            logger.error('Delete account error:', error);
             res.status(500).json({ error: 'Failed to delete account' });
         }
     },
@@ -98,7 +96,7 @@ const accountController = {
             const result = await Account.getTotalBalance(userId);
             res.status(200).json(result);
         } catch (error) {
-            console.error('Get total balance error:', error);
+            logger.error('Get total balance error:', error);
             res.status(500).json({ error: 'Failed to fetch total balance' });
         }
     }

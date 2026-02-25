@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const transactionService = require('./transaction.service');
 const duplicateDetectionService = require('./duplicate-detection.service');
 
@@ -36,7 +37,7 @@ const importService = {
                 await transactionService.addTransaction({ ...txn, userId });
                 results.imported++;
             } catch (error) {
-                console.error(`Import failed for transaction: ${txn.description}`, error);
+                logger.error(`Import failed for transaction: ${txn.description}`, error);
                 results.skipped++;
             }
         }

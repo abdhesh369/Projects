@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
@@ -49,7 +50,7 @@ const loadTemplate = (templateName, data = {}) => {
 
 const emailService = {
     async sendEmail({ to, subject, template, data, text }) {
-        console.log(`[Email] Sending to ${to}: ${subject}`);
+        logger.info(`[Email] Sending to ${to}: ${subject}`);
 
         // Load HTML template if specified
         const html = template ? loadTemplate(template, data) : null;
@@ -60,8 +61,8 @@ const emailService = {
 
         if (!transporter) {
             // Console-only fallback for development
-            console.log(`[Email] (MOCK) To: ${to}, Subject: ${subject}`);
-            console.log(`[Email] (MOCK) Body: ${text || html || 'No content'}`);
+            logger.info(`[Email] (MOCK) To: ${to}, Subject: ${subject}`);
+            logger.info(`[Email] (MOCK) Body: ${text || html || 'No content'}`);
             return { success: true, messageId: `mock_${Date.now()}`, mock: true };
         }
 
@@ -74,10 +75,10 @@ const emailService = {
                 html: html || undefined,
             });
 
-            console.log(`[Email] Sent successfully. MessageId: ${info.messageId}`);
+            logger.info(`[Email] Sent successfully. MessageId: ${info.messageId}`);
             return { success: true, messageId: info.messageId };
         } catch (error) {
-            console.error('[Email] Send failed:', error.message);
+            logger.error('[Email] Send failed:', error.message);
             throw error;
         }
     },

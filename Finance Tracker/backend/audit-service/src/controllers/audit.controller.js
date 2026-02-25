@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const loggingService = require('../services/logging.service');
 const complianceService = require('../services/compliance.service');
 
@@ -25,7 +26,7 @@ const auditController = {
 
             res.status(201).json(log);
         } catch (error) {
-            console.error('[Audit] Create log error:', error);
+            logger.error('[Audit] Create log error:', error);
             res.status(500).json({ error: 'Failed to create audit log' });
         }
     },
@@ -40,7 +41,7 @@ const auditController = {
             });
             res.status(200).json(logs);
         } catch (error) {
-            console.error('[Audit] Fetch logs error:', error);
+            logger.error('[Audit] Fetch logs error:', error);
             res.status(500).json({ error: 'Failed to fetch logs' });
         }
     },
@@ -56,7 +57,7 @@ const auditController = {
             const count = await complianceService.purgeOldLogs(days || 90);
             res.status(200).json({ message: `Purged ${count} logs` });
         } catch (error) {
-            console.error('[Audit] Purge logs error:', error);
+            logger.error('[Audit] Purge logs error:', error);
             res.status(500).json({ error: 'Failed to purge logs' });
         }
     }

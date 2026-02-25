@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const transactionService = require('../services/transaction.service');
 const importService = require('../services/import.service');
 const RecurringTransaction = require('../models/recurring-transaction.model');
@@ -13,7 +14,7 @@ const transactionController = {
             const summary = await importService.importTransactions(userId, transactions);
             res.status(200).json(summary);
         } catch (error) {
-            console.error('Import transactions error:', error);
+            logger.error('Import transactions error:', error);
             res.status(500).json({ error: 'Failed to import transactions' });
         }
     },
@@ -23,7 +24,7 @@ const transactionController = {
             const transaction = await transactionService.addTransaction({ ...req.body, userId });
             res.status(201).json(transaction);
         } catch (error) {
-            console.error('Create transaction error:', error);
+            logger.error('Create transaction error:', error);
             res.status(500).json({ error: 'Failed to create transaction' });
         }
     },
@@ -54,7 +55,7 @@ const transactionController = {
                 }
             });
         } catch (error) {
-            console.error('List transactions error:', error);
+            logger.error('List transactions error:', error);
             res.status(500).json({ error: 'Failed to fetch transactions' });
         }
     },
@@ -66,7 +67,7 @@ const transactionController = {
             if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
             res.status(200).json(transaction);
         } catch (error) {
-            console.error('Get transaction error:', error);
+            logger.error('Get transaction error:', error);
             res.status(500).json({ error: 'Failed to fetch transaction' });
         }
     },
@@ -78,7 +79,7 @@ const transactionController = {
             if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
             res.status(200).json(transaction);
         } catch (error) {
-            console.error('Update transaction error:', error);
+            logger.error('Update transaction error:', error);
             res.status(500).json({ error: 'Failed to update transaction' });
         }
     },
@@ -89,7 +90,7 @@ const transactionController = {
             await transactionService.deleteTransaction(req.params.id, userId);
             res.status(204).send();
         } catch (error) {
-            console.error('Delete transaction error:', error);
+            logger.error('Delete transaction error:', error);
             res.status(500).json({ error: 'Failed to delete transaction' });
         }
     },
@@ -100,7 +101,7 @@ const transactionController = {
             const rt = await RecurringTransaction.create({ ...req.body, userId });
             res.status(201).json(rt);
         } catch (error) {
-            console.error('Create recurring error:', error);
+            logger.error('Create recurring error:', error);
             res.status(500).json({ error: 'Failed to create recurring transaction' });
         }
     },
@@ -111,7 +112,7 @@ const transactionController = {
             const rts = await RecurringTransaction.findByUserId(userId);
             res.status(200).json(rts);
         } catch (error) {
-            console.error('List recurring error:', error);
+            logger.error('List recurring error:', error);
             res.status(500).json({ error: 'Failed to fetch recurring transactions' });
         }
     },
@@ -123,7 +124,7 @@ const transactionController = {
             const summary = await transactionService.getSummary(userId, { startDate, endDate });
             res.status(200).json(summary);
         } catch (error) {
-            console.error('Get summary error:', error);
+            logger.error('Get summary error:', error);
             res.status(500).json({ error: 'Failed to fetch transaction summary' });
         }
     },
@@ -135,7 +136,7 @@ const transactionController = {
             const breakdown = await transactionService.getCategoryBreakdown(userId, { startDate, endDate });
             res.status(200).json(breakdown);
         } catch (error) {
-            console.error('Get breakdown error:', error);
+            logger.error('Get breakdown error:', error);
             res.status(500).json({ error: 'Failed to fetch category breakdown' });
         }
     },
@@ -147,7 +148,7 @@ const transactionController = {
             const trend = await transactionService.getSpendingTrend(userId, { limit });
             res.status(200).json(trend);
         } catch (error) {
-            console.error('Get spending trend error:', error);
+            logger.error('Get spending trend error:', error);
             res.status(500).json({ error: 'Failed to fetch spending trend' });
         }
     },
@@ -159,7 +160,7 @@ const transactionController = {
             const trend = await transactionService.getIncomeVsExpenses(userId, { limit });
             res.status(200).json(trend);
         } catch (error) {
-            console.error('Get income vs expenses error:', error);
+            logger.error('Get income vs expenses error:', error);
             res.status(500).json({ error: 'Failed to fetch income vs expenses' });
         }
     },
@@ -170,7 +171,7 @@ const transactionController = {
             const trend = await transactionService.getNetFlowTrend(userId);
             res.status(200).json(trend);
         } catch (error) {
-            console.error('Get net flow trend error:', error);
+            logger.error('Get net flow trend error:', error);
             res.status(500).json({ error: 'Failed to fetch net flow trend' });
         }
     },
@@ -183,7 +184,7 @@ const transactionController = {
             const spending = await transactionService.getCategorySpending(userId, categoryId, { startDate, endDate });
             res.status(200).json({ current_spending: spending });
         } catch (error) {
-            console.error('Get category spending error:', error);
+            logger.error('Get category spending error:', error);
             res.status(500).json({ error: 'Failed to fetch category spending' });
         }
     },
@@ -197,7 +198,7 @@ const transactionController = {
             await transactionService.sync(userId, { added, modified, removed });
             res.status(200).json({ success: true });
         } catch (error) {
-            console.error('Sync transactions error:', error);
+            logger.error('Sync transactions error:', error);
             res.status(500).json({ error: 'Failed to sync transactions' });
         }
     }

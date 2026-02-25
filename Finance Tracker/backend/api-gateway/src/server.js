@@ -1,3 +1,4 @@
+const logger = require('../../shared/utils/logger');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -12,17 +13,19 @@ const PORT = process.env.PORT || 5000;
 
 const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
 if (!INTERNAL_SERVICE_TOKEN) {
-    console.error('FATAL: INTERNAL_SERVICE_TOKEN is not set');
+    logger.error('FATAL: INTERNAL_SERVICE_TOKEN is not set');
     process.exit(1);
 }
 
 // SECURITY: Hardening (Issues #12, #18, #5.7)
 app.use(helmet());
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : false, // false rejects all origins if not set
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'http://localhost:3011', // default to frontend
     credentials: true
 }));
 app.use(express.json({ limit: '10kb' }));
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'api-gateway' });
@@ -47,10 +50,10 @@ const createServiceProxy = (target) => createProxyMiddleware({
             if (req.user.email) proxyReq.setHeader('X-User-Email', req.user.email);
             if (req.user.role) proxyReq.setHeader('X-User-Role', req.user.role);
         }
-        console.log(`[Proxy] ${req.method} ${req.url} -> ${target}`);
+        logger.info(`[Proxy] ${req.method} ${req.url} -> ${target}`);
     },
     onError: (err, req, res) => {
-        console.error('Proxy Error:', err);
+        logger.error('Proxy Error:', err);
         res.status(502).json({ error: 'Service Unavailable' });
     }
 });
@@ -78,5 +81,5 @@ app.use('/api/analytics', rateLimit, createServiceProxy(process.env.ANALYTICS_SE
 app.use('/api/billing', rateLimit, createServiceProxy(process.env.USERS_SERVICE_URL || 'http://localhost:3010'));
 
 app.listen(PORT, () => {
-    console.log(`API Gateway running on port ${PORT}`);
+    logger.info(`API Gateway running on port ${PORT}`);
 });

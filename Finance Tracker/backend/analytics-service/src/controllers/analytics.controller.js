@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const axios = require('axios');
 
 const TRANSACTION_SERVICE_URL = process.env.TRANSACTION_SERVICE_URL || 'http://localhost:3009';
@@ -36,7 +37,7 @@ const analyticsController = {
                 savingsRate: Math.round(savingsRate * 100) / 100
             });
         } catch (error) {
-            console.error('Analytics summary error:', error.message);
+            logger.error('Analytics summary error:', error.message);
             res.status(500).json({ error: 'Failed to fetch analytics summary' });
         }
     },
@@ -60,7 +61,7 @@ const analyticsController = {
 
             res.status(200).json(breakdown);
         } catch (error) {
-            console.error('Category breakdown error:', error.message);
+            logger.error('Category breakdown error:', error.message);
             res.status(500).json({ error: 'Failed to fetch category breakdown' });
         }
     },
@@ -78,7 +79,7 @@ const analyticsController = {
 
             res.status(200).json(trend);
         } catch (error) {
-            console.error('Spending trend error:', error.message);
+            logger.error('Spending trend error:', error.message);
             res.status(500).json({ error: 'Failed to fetch spending trend' });
         }
     },
@@ -96,7 +97,7 @@ const analyticsController = {
             }));
             res.status(200).json(result);
         } catch (error) {
-            console.error('Income vs Expenses error:', error.message);
+            logger.error('Income vs Expenses error:', error.message);
             res.status(500).json({ error: 'Failed to fetch income vs expenses' });
         }
     },
@@ -127,7 +128,7 @@ const analyticsController = {
 
             res.status(200).json(trend.reverse());
         } catch (error) {
-            console.error('Account balance trend error:', error.message);
+            logger.error('Account balance trend error:', error.message);
             res.status(500).json({ error: 'Failed to fetch balance trend' });
         }
     },
@@ -138,7 +139,7 @@ const analyticsController = {
             const forecast = await forecastingService.predictNextMonthSpending(userId);
             res.status(200).json(forecast);
         } catch (error) {
-            console.error('Forecasting error:', error.message);
+            logger.error('Forecasting error:', error.message);
             res.status(500).json({ error: 'Failed to generate spending forecast' });
         }
     },
@@ -149,7 +150,7 @@ const analyticsController = {
             const insights = await insightsService.generateInsights(userId);
             res.status(200).json(insights);
         } catch (error) {
-            console.error('Insights error:', error.message);
+            logger.error('Insights error:', error.message);
             res.status(500).json({ error: 'Failed to generate spending insights' });
         }
     },
@@ -160,7 +161,7 @@ const analyticsController = {
             const trends = await trendDetectionService.detectSpendingTrends(userId);
             res.status(200).json(trends);
         } catch (error) {
-            console.error('Trend detection error:', error.message);
+            logger.error('Trend detection error:', error.message);
             res.status(500).json({ error: 'Failed to detect spending trends' });
         }
     }

@@ -1,3 +1,4 @@
+const logger = require('../../shared/utils/logger');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -9,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3007;
 
 if (!process.env.INTERNAL_SERVICE_TOKEN) {
-    console.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
+    logger.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
     process.exit(1);
 }
 
@@ -33,5 +34,5 @@ const server = http.createServer(app);
 realtimeService.init(server);
 
 server.listen(PORT, () => {
-    console.log(`Notification Service running on port ${PORT} (with WebSocket support)`);
+    logger.info(`Notification Service running on port ${PORT} (with WebSocket support)`);
 });

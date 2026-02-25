@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const axios = require('axios');
 
 const TRANSACTION_SERVICE_URL = process.env.TRANSACTION_SERVICE_URL || 'http://localhost:3009';
@@ -23,7 +24,7 @@ module.exports = {
             // Transaction service standardized format is { data, pagination }
             return response.data.data;
         } catch (error) {
-            console.error('Error fetching transactions from analytics-service:', error.message);
+            logger.error('Error fetching transactions from analytics-service:', error.message);
             throw new Error('Failed to fetch transaction data');
         }
     },
@@ -42,7 +43,7 @@ module.exports = {
             });
             return response.data;
         } catch (error) {
-            console.error('Error fetching category breakdown from analytics-service:', error.message);
+            logger.error('Error fetching category breakdown from analytics-service:', error.message);
             throw new Error('Failed to fetch category breakdown data');
         }
     }

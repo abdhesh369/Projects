@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const stripeService = require('../services/stripe.service');
 
 const billingController = {
@@ -19,7 +20,7 @@ const billingController = {
 
             res.status(200).json({ url: session.url, sessionId: session.id });
         } catch (error) {
-            console.error('[Billing] Checkout error:', error.message);
+            logger.error('[Billing] Checkout error:', error.message);
             res.status(500).json({ error: 'Failed to create checkout session' });
         }
     },
@@ -38,7 +39,7 @@ const billingController = {
 
             res.status(200).json({ url: session.url });
         } catch (error) {
-            console.error('[Billing] Portal error:', error.message);
+            logger.error('[Billing] Portal error:', error.message);
             res.status(500).json({ error: 'Failed to create portal session' });
         }
     },
@@ -57,7 +58,7 @@ const billingController = {
 
             res.status(200).json({ subscriptions });
         } catch (error) {
-            console.error('[Billing] getSubscriptions error:', error.message);
+            logger.error('[Billing] getSubscriptions error:', error.message);
             res.status(500).json({ error: 'Failed to fetch subscriptions' });
         }
     },
@@ -72,7 +73,7 @@ const billingController = {
             const result = await stripeService.cancelSubscription(id);
             res.status(200).json({ message: 'Subscription will cancel at period end', subscription: result.id });
         } catch (error) {
-            console.error('[Billing] cancel error:', error.message);
+            logger.error('[Billing] cancel error:', error.message);
             res.status(500).json({ error: 'Failed to cancel subscription' });
         }
     },
@@ -87,7 +88,7 @@ const billingController = {
             const result = await stripeService.resumeSubscription(id);
             res.status(200).json({ message: 'Subscription resumed', subscription: result.id });
         } catch (error) {
-            console.error('[Billing] resume error:', error.message);
+            logger.error('[Billing] resume error:', error.message);
             res.status(500).json({ error: 'Failed to resume subscription' });
         }
     },
@@ -107,7 +108,7 @@ const billingController = {
 
             res.status(200).json({ invoices });
         } catch (error) {
-            console.error('[Billing] getInvoices error:', error.message);
+            logger.error('[Billing] getInvoices error:', error.message);
             res.status(500).json({ error: 'Failed to fetch invoices' });
         }
     },
@@ -122,7 +123,7 @@ const billingController = {
             const result = await stripeService.handleWebhookEvent(req.body, signature);
             res.status(200).json(result);
         } catch (error) {
-            console.error('[Billing] Webhook error:', error.message);
+            logger.error('[Billing] Webhook error:', error.message);
             res.status(400).json({ error: `Webhook Error: ${error.message}` });
         }
     }

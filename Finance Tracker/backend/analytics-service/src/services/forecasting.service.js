@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const transactionClient = require('../utils/transactionClient');
 
 /**
@@ -41,7 +42,7 @@ const forecastingService = {
                 nextMonth: this._getNextMonth(lastThree[lastThree.length - 1].month)
             };
         } catch (error) {
-            console.error('Forecasting calculation error:', error);
+            logger.error('Forecasting calculation error:', error);
             throw error;
         }
     },

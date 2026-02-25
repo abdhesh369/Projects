@@ -5,7 +5,7 @@ const User = {
         const query = `
             INSERT INTO users (email, password_hash, first_name, last_name)
             VALUES ($1, $2, $3, $4)
-            RETURNING id, email, first_name, last_name, preferences, created_at;
+            RETURNING id, email, first_name, last_name, role, preferences, created_at;
         `;
         const values = [email, passwordHash, firstName, lastName];
         const { rows } = await db.query(query, values);
@@ -13,13 +13,13 @@ const User = {
     },
 
     async findByEmail(email) {
-        const query = 'SELECT id, email, password_hash, first_name, last_name, mfa_enabled, mfa_secret, preferences, created_at FROM users WHERE email = $1';
+        const query = 'SELECT id, email, password_hash, first_name, last_name, role, mfa_enabled, mfa_secret, preferences, created_at FROM users WHERE email = $1';
         const { rows } = await db.query(query, [email]);
         return rows[0];
     },
 
     async findById(id) {
-        const query = 'SELECT id, email, first_name, last_name, preferences, created_at FROM users WHERE id = $1';
+        const query = 'SELECT id, email, first_name, last_name, role, preferences, created_at FROM users WHERE id = $1';
         const { rows } = await db.query(query, [id]);
         return rows[0];
     },
@@ -33,7 +33,7 @@ const User = {
             UPDATE users 
             SET ${setClause}, updated_at = CURRENT_TIMESTAMP
             WHERE id = $1
-            RETURNING id, email, first_name, last_name, mfa_enabled, preferences, created_at;
+            RETURNING id, email, first_name, last_name, role, mfa_enabled, preferences, created_at;
         `;
         const values = [id, ...fields.map(f => updates[f])];
         const { rows } = await db.query(query, values);

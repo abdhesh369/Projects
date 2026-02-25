@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const budgetService = require('./budget.service');
 
 /**
@@ -39,7 +40,7 @@ const trackingService = {
                 details: trackingDetails
             };
         } catch (error) {
-            console.error('Budget tracking error:', error);
+            logger.error('Budget tracking error:', error);
             throw error;
         }
     }

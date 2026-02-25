@@ -1,14 +1,15 @@
+const logger = require('../../../shared/utils/logger');
 const RecurringTransaction = require('../models/recurring-transaction.model');
 const Transaction = require('../models/transaction.model');
 
 const recurringWorker = {
     async processRecurring() {
-        console.log('[Worker] Checking for due recurring transactions...');
+        logger.info('[Worker] Checking for due recurring transactions...');
         try {
             const dueTransactions = await RecurringTransaction.findDue();
 
             for (const rt of dueTransactions) {
-                console.log(`[Worker] Processing recurring transaction: ${rt.description}`);
+                logger.info(`[Worker] Processing recurring transaction: ${rt.description}`);
 
                 // Create the actual transaction
                 await Transaction.create({
@@ -33,7 +34,7 @@ const recurringWorker = {
                 }
             }
         } catch (error) {
-            console.error('[Worker] Error processing recurring transactions:', error);
+            logger.error('[Worker] Error processing recurring transactions:', error);
         }
     },
 
@@ -50,7 +51,7 @@ const recurringWorker = {
     },
 
     start(intervalMs = 3600000) { // Default 1 hour
-        console.log(`[Worker] Starting recurring transaction worker (interval: ${intervalMs}ms)`);
+        logger.info(`[Worker] Starting recurring transaction worker (interval: ${intervalMs}ms)`);
         setInterval(() => this.processRecurring(), intervalMs);
         // Also run immediately on start
         this.processRecurring();

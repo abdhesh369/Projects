@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const axios = require('axios');
 
 // Using localhost as we are in a single-machine dev environment.
@@ -17,7 +18,7 @@ const reportGenerationService = {
             });
             return response.data;
         } catch (error) {
-            console.error('[Reporting] Summary fetch error:', error.message);
+            logger.error('[Reporting] Summary fetch error:', error.message);
             throw new Error('Failed to fetch reporting summary data');
         }
     },
@@ -33,7 +34,7 @@ const reportGenerationService = {
             });
             return response.data;
         } catch (error) {
-            console.error('[Reporting] Breakdown fetch error:', error.message);
+            logger.error('[Reporting] Breakdown fetch error:', error.message);
             throw new Error('Failed to fetch category breakdown data');
         }
     },
@@ -49,7 +50,7 @@ const reportGenerationService = {
             });
             return response.data.transactions || response.data;
         } catch (error) {
-            console.error('[Reporting] Transactions fetch error:', error.message);
+            logger.error('[Reporting] Transactions fetch error:', error.message);
             throw new Error('Failed to fetch transactions for export');
         }
     }

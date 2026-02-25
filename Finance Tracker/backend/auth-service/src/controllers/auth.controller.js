@@ -1,12 +1,15 @@
+const logger = require('../../../shared/utils/logger');
 const User = require('../models/user.model');
 const RefreshToken = require('../models/refresh-token.model');
 const Session = require('../models/session.model');
 const authenticationService = require('../services/authentication.service');
 const jwtService = require('../services/jwt.service');
 const mfaService = require('../services/mfa.service');
+const crypto = require('crypto');
+const redis = require('../config/redis');
 
 // Ensure sessions table exists on startup
-Session.ensureTable().catch(err => console.error('Failed to create sessions table:', err.message));
+Session.ensureTable().catch(err => logger.error('Failed to create sessions table:', err.message));
 
 const authController = {
     async register(req, res) {
@@ -31,14 +34,19 @@ const authController = {
 
             // Track session
             const deviceInfo = req.headers['user-agent'] || 'Unknown';
-            const ipAddress = req.ip || req.connection.remoteAddress;
+            const ipAddress = req.ip || req.socket.remoteAddress;
             await Session.create(user.id, token, deviceInfo, ipAddress);
 
             // Fix Issue #17: Safe object copy instead of mutation
             const { password_hash: _, ...safeUser } = user;
-            res.status(201).json({ user: safeUser, token, refreshToken });
+
+            // Fix Issue #16: Use httpOnly cookies
+            res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+            res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+            res.status(201).json({ user: safeUser });
         } catch (error) {
-            console.error('Registration error:', error);
+            logger.error('Registration error:', error);
             res.status(500).json({ error: 'Failed to register user' });
         }
     },
@@ -77,22 +85,26 @@ const authController = {
 
             // Track session
             const deviceInfo = req.headers['user-agent'] || 'Unknown';
-            const ipAddress = req.ip || req.connection.remoteAddress;
+            const ipAddress = req.ip || req.socket.remoteAddress;
             await Session.create(user.id, token, deviceInfo, ipAddress);
 
             // Fix Issue #17: Safe object copy instead of mutation
             const { password_hash: _, mfa_secret: __, ...safeUser } = user;
 
-            res.status(200).json({ user: safeUser, token, refreshToken });
+            // Fix Issue #16: Use httpOnly cookies
+            res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+            res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+            res.status(200).json({ user: safeUser });
         } catch (error) {
-            console.error('Login error:', error);
+            logger.error('Login error:', error);
             res.status(500).json({ error: 'Failed to login' });
         }
     },
 
     async refresh(req, res) {
         try {
-            const { refreshToken } = req.body;
+            const refreshToken = req.cookies.refreshToken;
             if (!refreshToken) return res.status(400).json({ error: 'Refresh token required' });
 
             const payload = jwtService.verifyRefreshToken(refreshToken);
@@ -112,33 +124,43 @@ const authController = {
 
             // Track the new session
             const deviceInfo = req.headers['user-agent'] || 'Unknown';
-            const ipAddress = req.ip || req.connection.remoteAddress;
+            const ipAddress = req.ip || req.socket.remoteAddress;
             await Session.create(payload.id, token, deviceInfo, ipAddress);
 
-            res.status(200).json({ token });
+            // Fix Issue #16: Update access token cookie
+            res.cookie('accessToken', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+
+            res.status(200).json({ success: true });
         } catch (error) {
-            console.error('Refresh error:', error);
+            logger.error('Refresh error:', error);
             res.status(500).json({ error: 'Failed to refresh token' });
         }
     },
 
     async logout(req, res) {
         try {
-            const { refreshToken } = req.body;
+            const refreshToken = req.cookies.refreshToken;
             if (refreshToken) {
                 await RefreshToken.deleteByToken(refreshToken);
             }
 
             // Remove session for the current token
             const authHeader = req.headers.authorization;
-            if (authHeader) {
-                const token = authHeader.split(' ')[1];
-                if (token) await Session.deleteByToken(token);
+            let token = null;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.split(' ')[1];
+            } else if (req.cookies && req.cookies.accessToken) {
+                token = req.cookies.accessToken;
             }
+
+            if (token) await Session.deleteByToken(token);
+
+            res.clearCookie('accessToken');
+            res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
 
             res.status(200).json({ message: 'Logged out successfully' });
         } catch (error) {
-            console.error('Logout error:', error);
+            logger.error('Logout error:', error);
             res.status(500).json({ error: 'Failed to logout' });
         }
     },
@@ -152,7 +174,12 @@ const authController = {
 
             // Delete all sessions except the current one
             const authHeader = req.headers.authorization;
-            const currentToken = authHeader ? authHeader.split(' ')[1] : null;
+            let currentToken = null;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                currentToken = authHeader.split(' ')[1];
+            } else if (req.cookies && req.cookies.accessToken) {
+                currentToken = req.cookies.accessToken;
+            }
 
             let removedCount;
             if (currentToken) {
@@ -161,11 +188,14 @@ const authController = {
                 removedCount = await Session.deleteAllByUserId(userId);
             }
 
+            res.clearCookie('accessToken');
+            res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+
             res.status(200).json({
                 message: `Logged out of ${removedCount} other device(s) successfully`
             });
         } catch (error) {
-            console.error('LogoutAll error:', error);
+            logger.error('LogoutAll error:', error);
             res.status(500).json({ error: 'Failed to logout all devices' });
         }
     },
@@ -176,7 +206,7 @@ const authController = {
             const sessions = await Session.findByUserId(userId);
             res.status(200).json({ sessions });
         } catch (error) {
-            console.error('GetSessions error:', error);
+            logger.error('GetSessions error:', error);
             res.status(500).json({ error: 'Failed to fetch sessions' });
         }
     },
@@ -187,7 +217,7 @@ const authController = {
             const mfaDetails = await mfaService.generateSecret(userId);
             res.status(200).json(mfaDetails);
         } catch (error) {
-            console.error('MFA Setup error:', error);
+            logger.error('MFA Setup error:', error);
             res.status(500).json({ error: 'Failed to setup MFA' });
         }
     },
@@ -212,7 +242,7 @@ const authController = {
 
             res.status(200).json({ message: 'MFA verified and enabled successfully' });
         } catch (error) {
-            console.error('MFA Verification error:', error);
+            logger.error('MFA Verification error:', error);
             res.status(500).json({ error: 'Failed to verify MFA' });
         }
     },
@@ -243,8 +273,59 @@ const authController = {
             await User.update(userId, { mfa_enabled: false, mfa_secret: null });
             res.status(200).json({ message: 'MFA disabled successfully' });
         } catch (error) {
-            console.error('MFA Disable error:', error);
+            logger.error('MFA Disable error:', error);
             res.status(500).json({ error: 'Failed to disable MFA' });
+        }
+    },
+
+    async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+            if (!email) return res.status(400).json({ error: 'Email is required' });
+
+            const user = await User.findByEmail(email);
+            if (!user) {
+                return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+            }
+
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+            await redis.set(`pwdreset:${tokenHash}`, user.id, 'EX', 3600);
+
+            logger.info(`[Auth] Forgot Password URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
+            // Ideally, fire an event to notification-service here
+
+            res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
+        } catch (error) {
+            logger.error('Forgot password error:', error);
+            res.status(500).json({ error: 'Failed to process request' });
+        }
+    },
+
+    async resetPassword(req, res) {
+        try {
+            const { token, newPassword } = req.body;
+            if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+
+            const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+            const userId = await redis.get(`pwdreset:${tokenHash}`);
+
+            if (!userId) {
+                return res.status(400).json({ error: 'Invalid or expired reset token' });
+            }
+
+            const passwordHash = await authenticationService.hashPassword(newPassword);
+            await User.update(userId, { password_hash: passwordHash });
+
+            await redis.del(`pwdreset:${tokenHash}`);
+            await Session.deleteAllByUserId(userId);
+            await RefreshToken.deleteByUserId(userId);
+
+            res.status(200).json({ message: 'Password reset successfully' });
+        } catch (error) {
+            logger.error('Reset password error:', error);
+            res.status(500).json({ error: 'Failed to reset password' });
         }
     }
 };

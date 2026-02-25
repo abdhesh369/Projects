@@ -1,8 +1,9 @@
+const logger = require('../../../shared/utils/logger');
 const crypto = require('crypto');
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 if (!ENCRYPTION_KEY) {
-    console.error('FATAL: ENCRYPTION_KEY not configured');
+    logger.error('FATAL: ENCRYPTION_KEY not configured');
     process.exit(1);
 }
 const IV_LENGTH = 16;

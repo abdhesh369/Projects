@@ -1,3 +1,4 @@
+const logger = require('../../../shared/utils/logger');
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -9,7 +10,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err);
+    logger.error('Unexpected error on idle client', err);
 });
 
 module.exports = {
