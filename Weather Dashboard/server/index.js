@@ -1,9 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const axios = require('axios');
+import connectDB from './db.js';
+import express from 'express';
+import dotenv from 'dotenv';
+import axios from 'axios';
+
+dotenv.config();
+connectDB();
+
 const app = express();
-
-
 
 app.get('/api/weather', async (req, res) => {
   try {
@@ -14,11 +17,10 @@ app.get('/api/weather', async (req, res) => {
     }
 
     const apiKey = process.env.WEATHER_API_KEY;
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+    const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`;
 
     const weatherResponse = await axios.get(url);
     const forecastData = weatherResponse.data;
-
 
     const currentWeatherData = {
       city: forecastData.city.name,
@@ -34,8 +36,12 @@ app.get('/api/weather', async (req, res) => {
 
     const dailyForecasts = {};
     forecastData.list.forEach(item => {
-      const date = new Date(item.dt * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      
+      const date = new Date(item.dt * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
       if (!dailyForecasts[date]) {
         dailyForecasts[date] = {
           day: new Date(item.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -43,18 +49,16 @@ app.get('/api/weather', async (req, res) => {
           icons: new Set(),
         };
       }
-      
+
       dailyForecasts[date].temps.push(item.main.temp);
       dailyForecasts[date].icons.add(item.weather[0].icon);
     });
-
-
 
     const processedForecast = Object.values(dailyForecasts).map(dayData => ({
       day: dayData.day,
       tempHigh: Math.max(...dayData.temps),
       tempLow: Math.min(...dayData.temps),
-      icon: dayData.icons.values().next().value, 
+      icon: dayData.icons.values().next().value,
     })).slice(0, 5);
 
     res.json(processedForecast);

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import SearchForm from "./components/SearchForm";
 import CurrentWeather from "./components/CurrentWeather";
+import WeatherChart from './components/WeatherChart';
 import Forecast from "./components/Forecast";
 import "./App.css";
 
@@ -19,9 +20,23 @@ useEffect(() => {
   }
 }, []);
 
+
+const handleSetDefault = (city) => {
+  localStorage.setItem('defaultCity', city);
+  alert(`${city} has been set as your default city!`);
+};
+
 useEffect(() => {
-  localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-}, [searchHistory]);
+  const storedHistory = localStorage.getItem('searchHistory');
+    if (storedHistory) {
+      setSearchHistory(JSON.parse(storedHistory));
+    }
+    const defaultCity = localStorage.getItem('defaultCity');
+    if (defaultCity) {
+      fetchWeather(defaultCity);
+    }
+  }, []);
+
 
 
 const fetchWeather = async (city) => {
@@ -77,9 +92,16 @@ const fetchWeather = async (city) => {
         {weatherData && !loading && !error && (
           <>
             
-            <CurrentWeather weatherData={weatherData.current} />
+            <CurrentWeather weatherData={weatherData.current} onSetDefault={handleSetDefault} />
             
             <Forecast forecastData={weatherData.forecast} />
+             {(() => {
+              const chartData = weatherData.forecast.map(day => ({
+                name: day.day,
+                temperature: Math.round(day.tempHigh)
+              }));
+              return <WeatherChart data={chartData} />;
+            })()}
           </>
         )}
       </main>

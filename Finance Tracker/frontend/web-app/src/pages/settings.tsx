@@ -56,6 +56,13 @@ export default function Settings() {
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
+    // Security State
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+    const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+
     useEffect(() => {
         if (user) {
             setFirstName(user.firstName);
@@ -235,6 +242,163 @@ export default function Settings() {
                                     </div>
                                 ))
                             )}
+                        </div>
+                    </div>
+                );
+
+            case 'security':
+                return (
+                    <div className={styles.sectionContent}>
+                        <h2 className={styles.sectionTitle}>Security Settings</h2>
+                        <p className={styles.sectionDescription}>Manage your password and authentication methods</p>
+
+                        <div className={styles.securityCard}>
+                            <h3 className={styles.title} style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Change Password</h3>
+                            <div className={styles.formGrid}>
+                                <Input
+                                    label="Current Password"
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                />
+                                <div /> {/* Empty space for layout */}
+                                <Input
+                                    label="New Password"
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                                <Input
+                                    label="Confirm New Password"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                />
+                            </div>
+                            <div className={styles.formActions}>
+                                <Button
+                                    variant="primary"
+                                    onClick={() => {
+                                        setIsUpdatingSecurity(true);
+                                        setTimeout(() => {
+                                            alert('Password updated successfully');
+                                            setCurrentPassword('');
+                                            setNewPassword('');
+                                            setConfirmPassword('');
+                                            setIsUpdatingSecurity(false);
+                                        }, 1000);
+                                    }}
+                                    isLoading={isUpdatingSecurity}
+                                    disabled={!currentPassword || !newPassword || newPassword !== confirmPassword}
+                                >
+                                    Update Password
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className={styles.navDivider} />
+
+                        <div className={styles.securityCard}>
+                            <div className={styles.securityItem}>
+                                <div className={styles.securityInfo}>
+                                    <span className={styles.securityTitle}>Two-Factor Authentication (2FA)</span>
+                                    <span className={styles.securityDescription}>Add an extra layer of security to your account</span>
+                                </div>
+                                <label className={styles.toggle}>
+                                    <input
+                                        type="checkbox"
+                                        checked={is2FAEnabled}
+                                        onChange={(e) => setIs2FAEnabled(e.target.checked)}
+                                    />
+                                    <span className={styles.toggleSlider} />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className={styles.navDivider} />
+
+                        <div className={styles.securityCard}>
+                            <h3 className={styles.title} style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Active Sessions</h3>
+                            <p className={styles.sectionDescription} style={{ marginBottom: '1rem' }}>These are devices that have logged into your account.</p>
+                            <div className={styles.logList} style={{ maxHeight: 'none' }}>
+                                <div className={styles.logItem}>
+                                    <div className={styles.logHeader}>
+                                        <span className={styles.logAction}>Mac OS • Chrome</span>
+                                        <span className={styles.logTime}>Active now</span>
+                                    </div>
+                                    <div className={styles.logDetails}>
+                                        <p>Location: <span className={styles.logResource}>Local</span></p>
+                                        <p className={styles.logIp}>IP: 127.0.0.1</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={styles.formActions} style={{ marginTop: '1rem' }}>
+                                <Button variant="danger">
+                                    Log out all other devices
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'billing':
+                return (
+                    <div className={styles.sectionContent}>
+                        <h2 className={styles.sectionTitle}>Billing & Subscription</h2>
+                        <p className={styles.sectionDescription}>Manage your subscription plan and payment methods</p>
+
+                        <div className={styles.securityCard}>
+                            <div className={styles.securityItem} style={{ alignItems: 'flex-start', padding: 0 }}>
+                                <div className={styles.securityInfo}>
+                                    <span className={styles.securityTitle} style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Pro Plan</span>
+                                    <span className={styles.securityDescription}>$9.99 / month</span>
+                                    <span className={styles.securityDescription} style={{ marginTop: '0.25rem' }}>
+                                        Next billing date: {format(new Date(new Date().setMonth(new Date().getMonth() + 1)), 'MMM d, yyyy')}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <Button variant="secondary">Cancel Subscription</Button>
+                                    <Button variant="primary">Upgrade Plan</Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.navDivider} />
+
+                        <div className={styles.securityCard}>
+                            <h3 className={styles.title} style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Payment Method</h3>
+                            <div className={styles.securityItem} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)' }}>
+                                <div className={styles.securityInfo} style={{ flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
+                                    <CreditCardIcon style={{ width: '2.5rem', height: '2.5rem', color: 'var(--color-primary)' }} />
+                                    <div>
+                                        <div className={styles.securityTitle}>Visa ending in 4242</div>
+                                        <div className={styles.securityDescription}>Expires 12/2026</div>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="sm">Update</Button>
+                            </div>
+                        </div>
+
+                        <div className={styles.navDivider} />
+
+                        <div className={styles.securityCard}>
+                            <h3 className={styles.title} style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Billing History</h3>
+                            <div className={styles.logList} style={{ maxHeight: 'none' }}>
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className={styles.logItem} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className={styles.securityInfo}>
+                                            <span className={styles.securityTitle} style={{ marginBottom: '0.25rem' }}>Pro Plan - Monthly</span>
+                                            <span className={styles.securityDescription}>
+                                                {format(new Date(new Date().setMonth(new Date().getMonth() - i + 1)), 'MMM d, yyyy')}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>$9.99</span>
+                                            <Button variant="ghost" size="sm">Download PDF</Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 );

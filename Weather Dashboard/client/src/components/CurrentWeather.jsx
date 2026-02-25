@@ -11,7 +11,7 @@ const dummyWeatherData = {
   feelsLike: 14.3,
 };
 
-function CurrentWeather({ weatherData,onSetDefult }) {
+function CurrentWeather({ weatherData, onSetDefault }) {
   const {
     city,
     country,
@@ -41,8 +41,10 @@ function CurrentWeather({ weatherData,onSetDefult }) {
           <p>Humidity: {humidity}%</p>
           <p>Wind: {windSpeed} m/s</p>
         </div>
+        <button onClick={() => onSetDefault(city)} className="btn-set-default">
+          Set as Default
+        </button>
       </div>
-      <button onClick={onSetDefult} className="defult-btn">Set Defult</button>
     </>
   );
 }
