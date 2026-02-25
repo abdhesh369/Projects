@@ -51,7 +51,13 @@ Built to be fast and responsive, utilizing modern React ecosystems.
 The backend is built around a highly scalable microservices architecture utilizing Node.js and Express. Each service runs independently and manages its own domain logic.
 - **API Gateway:** Centralized entry point on Port 3000 that proxies requests to the appropriate underlying microservice.
 - **Database:** Relies on **PostgreSQL** (interfaced through the `pg` package).
-- **Security:** Secured via `helmet`, CORS setup, and JSON Web Tokens (`jsonwebtoken`) exchanged via HTTP headers. Environment variables are managed via `dotenv`.
+- **Security:** Secured via `helmet`, CORS setup, and JSON Web Tokens (`jsonwebtoken`).
+
+#### Security Architecture
+- **Internal Firewall (Issue #7)**: In a production environment, all microservices except the `api-gateway` MUST be locked down to only accept traffic from the internal VPC/Docker network. They should NOT be exposed to the public internet.
+- **Service-to-Service Auth**: Microservices verify requests either via a shared `INTERNAL_SERVICE_TOKEN` passed in the `x-internal-token` header (for internal syncs/calls) or by validating JWTs issued by the `auth-service`.
+- **Entropy Requirement**: All `JWT_SECRET` and `REFRESH_TOKEN_SECRET` values must be at least 32 characters long to ensure cryptographic strength.
+- **Fail-Safe Config**: Services like `user-service` and `auth-service` are designed to "Fail-Fast" and exit if required secrets or integration keys (like Stripe) are missing or set to insecure placeholders.
 
 ## Installation and Setup
 

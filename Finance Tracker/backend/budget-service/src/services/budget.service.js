@@ -41,7 +41,7 @@ const budgetService = {
             try {
                 // Fetch spending securely from transaction-service via internal API
                 const response = await axios.get(
-                    `${TRANSACTION_SERVICE_URL}/api/transactions/categories/${budget.category_id}/spending`,
+                    `${TRANSACTION_SERVICE_URL}/categories/${budget.category_id}/spending`,
                     {
                         params: {
                             startDate: startDate.toISOString().split('T')[0],

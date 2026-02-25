@@ -22,6 +22,16 @@ const Category = {
         return rows;
     },
 
+    async findByName(userId, name) {
+        const query = `
+            SELECT * FROM categories 
+            WHERE (user_id = $1 OR user_id IS NULL) AND LOWER(name) = LOWER($2)
+            LIMIT 1;
+        `;
+        const { rows } = await db.query(query, [userId, name]);
+        return rows[0];
+    },
+
     async findById(id) {
         const query = 'SELECT * FROM categories WHERE id = $1';
         const { rows } = await db.query(query, [id]);

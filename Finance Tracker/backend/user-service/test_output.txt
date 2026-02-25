@@ -1,0 +1,22 @@
+FAIL src/services/stripe.service.test.js
+  ● Test suite failed to run
+
+    ReferenceError: Cannot access 'mockConstructEvent' before initialization
+
+      13 |     return jest.fn().mockImplementation(() => ({
+      14 |         webhooks: {
+    > 15 |             constructEvent: mockConstructEvent
+         |                             ^
+      16 |         }
+      17 |     }));
+      18 | });
+
+      at mockConstructor.mockConstructEvent (src/services/stripe.service.test.js:15:29)
+      at Object.<anonymous> (src/services/stripe.service.js:19:16)
+      at Object.require (src/services/stripe.service.test.js:1:23)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.657 s
+Ran all test suites matching src/services/stripe.service.test.js.

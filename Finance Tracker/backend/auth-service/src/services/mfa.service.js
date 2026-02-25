@@ -1,5 +1,8 @@
 const { authenticator } = require('otplib');
 const qrcode = require('qrcode');
+const redis = require('../config/redis');
+
+const PENDING_MFA_TTL = 300; // 5 minutes
 
 const mfaService = {
     async generateSecret(userId) {
@@ -8,10 +11,21 @@ const mfaService = {
         const otpauth = authenticator.keyuri(userId, 'FinanceTracker', secret);
         const qrCode = await qrcode.toDataURL(otpauth);
 
+        // Store pending secret in Redis
+        await redis.set(`mfa:pending:${userId}`, secret, 'EX', PENDING_MFA_TTL);
+
         return {
-            secret,
+            secret, // Still returning for QR display, but verifyMFA won't accept it back from client
             qrCode
         };
+    },
+
+    async getPendingSecret(userId) {
+        return await redis.get(`mfa:pending:${userId}`);
+    },
+
+    async clearPendingSecret(userId) {
+        await redis.del(`mfa:pending:${userId}`);
     },
 
     async verifyCode(userId, code, secret) {
@@ -30,7 +44,6 @@ const mfaService = {
 
     async enroll(userId) {
         console.log(`[Auth] MFA: Enrolling user ${userId}`);
-        // In a real app, this would update the user's mfa_enabled flag in DB
         return true;
     }
 };

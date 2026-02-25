@@ -36,7 +36,7 @@ app.use(validateRequest);
 const createServiceProxy = (target) => createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite: { '^/api/[^/]+': '' }, // Remove /api/service-name
+    pathRewrite: (path) => path.replace(/^\/api\/[^\/]+/, '') || '/', // Fix Issue #8: Ensure at least '/' is returned
     onProxyReq: (proxyReq, req, res) => {
         // Add Internal Secret
         proxyReq.setHeader('X-Internal-Token', INTERNAL_SERVICE_TOKEN);

@@ -19,41 +19,46 @@ const Transaction = {
     },
 
     async findByUserId(userId, { limit = 50, offset = 0, startDate, endDate, categoryId, type } = {}) {
-        let query = `
-            SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color 
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = $1
-        `;
+        let whereClause = 'WHERE t.user_id = $1';
         const values = [userId];
         let paramCount = 1;
 
         if (startDate) {
             paramCount++;
-            query += ` AND t.date >= $${paramCount}`;
+            whereClause += ` AND t.date >= $${paramCount}`;
             values.push(startDate);
         }
         if (endDate) {
             paramCount++;
-            query += ` AND t.date <= $${paramCount}`;
+            whereClause += ` AND t.date <= $${paramCount}`;
             values.push(endDate);
         }
         if (categoryId) {
             paramCount++;
-            query += ` AND t.category_id = $${paramCount}`;
+            whereClause += ` AND t.category_id = $${paramCount}`;
             values.push(categoryId);
         }
         if (type) {
             paramCount++;
-            query += ` AND t.type = $${paramCount}`;
+            whereClause += ` AND t.type = $${paramCount}`;
             values.push(type);
         }
 
-        query += ` ORDER BY t.date DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
-        values.push(limit, offset);
+        const totalQuery = `SELECT COUNT(*) FROM transactions t ${whereClause}`;
+        const { rows: countRows } = await db.query(totalQuery, values);
+        const total = parseInt(countRows[0].count);
 
-        const { rows } = await db.query(query, values);
-        return rows;
+        const dataQuery = `
+            SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color 
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            ${whereClause}
+            ORDER BY t.date DESC
+            LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+        `;
+        const { rows: transactions } = await db.query(dataQuery, [...values, limit, offset]);
+
+        return { transactions, total };
     },
 
     async findById(id, userId) {
@@ -121,15 +126,19 @@ const Transaction = {
     },
 
     async getSpendingTrend(userId, { limit = 12 } = {}) {
+        // Fix Issue #14: Return most recent L months sorted chronologically
         const query = `
-            SELECT 
-                TO_CHAR(date, 'YYYY-MM') as month,
-                SUM(amount) as value
-            FROM transactions
-            WHERE user_id = $1 AND type = 'expense'
-            GROUP BY month
+            SELECT * FROM (
+                SELECT 
+                    TO_CHAR(date, 'YYYY-MM') as month,
+                    SUM(amount) as value
+                FROM transactions
+                WHERE user_id = $1 AND type = 'expense'
+                GROUP BY month
+                ORDER BY month DESC
+                LIMIT $2
+            ) sub
             ORDER BY month ASC
-            LIMIT $2
         `;
         const { rows } = await db.query(query, [userId, limit]);
         return rows;
@@ -173,6 +182,66 @@ const Transaction = {
         `;
         const { rows } = await db.query(query, [userId, categoryId, startDate, endDate]);
         return rows[0].current_spending;
+    },
+
+    async bulkSync(userId, { added, modified, removed }) {
+        const client = await db.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 1. Handle Added (Upsert)
+            if (added && added.length > 0) {
+                for (const txn of added) {
+                    const query = `
+                        INSERT INTO transactions (
+                            user_id, account_id, amount, type, description, 
+                            date, plaid_transaction_id, pending
+                        )
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        ON CONFLICT (plaid_transaction_id) 
+                        DO UPDATE SET 
+                            amount = EXCLUDED.amount,
+                            description = EXCLUDED.description,
+                            date = EXCLUDED.date,
+                            pending = EXCLUDED.pending,
+                            updated_at = CURRENT_TIMESTAMP
+                        RETURNING id;
+                    `;
+                    // Note: We might need to map plaid_account_id to internal account_id
+                    // For now, assuming internal account_id is passed or handled
+                    await client.query(query, [
+                        userId, txn.account_id, txn.amount, txn.type || 'expense',
+                        txn.name || txn.description, txn.date, txn.plaid_transaction_id, txn.pending || false
+                    ]);
+                }
+            }
+
+            // 2. Handle Modified
+            if (modified && modified.length > 0) {
+                for (const txn of modified) {
+                    const query = `
+                        UPDATE transactions 
+                        SET amount = $1, description = $2, pending = $3, updated_at = CURRENT_TIMESTAMP
+                        WHERE plaid_transaction_id = $4 AND user_id = $5;
+                    `;
+                    await client.query(query, [txn.amount, txn.name || txn.description, txn.pending, txn.plaid_transaction_id, userId]);
+                }
+            }
+
+            // 3. Handle Removed
+            if (removed && removed.length > 0) {
+                const plaidIds = removed.map(txn => txn.plaid_transaction_id);
+                await client.query('DELETE FROM transactions WHERE plaid_transaction_id = ANY($1) AND user_id = $2', [plaidIds, userId]);
+            }
+
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 };
 

@@ -14,6 +14,8 @@ router.use(authMiddleware);
 
 router.post('/', budgetController.create);
 router.get('/', budgetController.list);
+router.get('/tracking', budgetController.getTrackingSummary);
+router.get('/alerts', budgetController.getAlerts);
 router.patch('/:id', budgetController.update);
 router.delete('/:id', budgetController.delete);
 

@@ -1,8 +1,19 @@
 const Transaction = require('../models/transaction.model');
+const Category = require('../models/category.model');
+const categorizationService = require('./categorization.service');
 
 const transactionService = {
     async addTransaction(data) {
-        // Here we could add logic for categorization if categoryId is missing
+        // Fix Issue #9: Auto-categorize if categoryId is missing
+        if (!data.categoryId && data.description) {
+            const categoryName = categorizationService.categorize(data.description);
+            if (categoryName) {
+                const category = await Category.findByName(data.userId, categoryName);
+                if (category) {
+                    data.categoryId = category.id;
+                }
+            }
+        }
         return await Transaction.create(data);
     },
 
@@ -44,6 +55,10 @@ const transactionService = {
 
     async getCategorySpending(userId, categoryId, filters) {
         return await Transaction.getCategorySpending(userId, categoryId, filters);
+    },
+
+    async sync(userId, syncData) {
+        return await Transaction.bulkSync(userId, syncData);
     }
 };
 

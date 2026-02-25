@@ -1,8 +1,20 @@
 const Stripe = require('stripe');
+const User = require('../models/user.model');
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// Fix Issue #4: Enforce missing Stripe keys
+if (!STRIPE_SECRET_KEY || STRIPE_SECRET_KEY.startsWith('sk_test_placeholder')) {
+    console.error('FATAL: STRIPE_SECRET_KEY is not configured or using placeholder.');
+    process.exit(1);
+}
+
+if (!STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.startsWith('whsec_placeholder')) {
+    console.error('FATAL: STRIPE_WEBHOOK_SECRET is not configured or using placeholder.');
+    process.exit(1);
+}
 
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
@@ -130,22 +142,50 @@ const stripeService = {
     async handleWebhookEvent(rawBody, signature) {
         const event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
 
+        const data = event.data.object;
+
         switch (event.type) {
             case 'checkout.session.completed':
-                console.log('[Stripe] Checkout session completed:', event.data.object.id);
+                if (data.mode === 'subscription') {
+                    const userId = data.metadata.user_id;
+                    const customerId = data.customer;
+                    const subscriptionId = data.subscription;
+
+                    // We need to link the customer ID to the user if not already done
+                    await User.updateProfile(userId, { stripe_customer_id: customerId }); // Assuming updateProfile can handle this or use a generic update
+                }
                 break;
+
             case 'invoice.paid':
-                console.log('[Stripe] Invoice paid:', event.data.object.id);
+                await User.updateSubscription(data.customer, {
+                    subscriptionId: data.subscription,
+                    plan: 'premium', // Currently assuming single premium tier
+                    status: 'active'
+                });
                 break;
+
             case 'invoice.payment_failed':
-                console.log('[Stripe] Invoice payment failed:', event.data.object.id);
+                await User.updateSubscription(data.customer, {
+                    status: 'past_due'
+                });
                 break;
+
             case 'customer.subscription.updated':
-                console.log('[Stripe] Subscription updated:', event.data.object.id);
+                await User.updateSubscription(data.customer, {
+                    subscriptionId: data.id,
+                    status: data.status,
+                    plan: data.items.data[0].price.nickname || 'premium'
+                });
                 break;
+
             case 'customer.subscription.deleted':
-                console.log('[Stripe] Subscription deleted:', event.data.object.id);
+                await User.updateSubscription(data.customer, {
+                    subscriptionId: null,
+                    status: 'canceled',
+                    plan: 'free'
+                });
                 break;
+
             default:
                 console.log(`[Stripe] Unhandled event type: ${event.type}`);
         }

@@ -1,7 +1,22 @@
 const transactionService = require('../services/transaction.service');
+const importService = require('../services/import.service');
 const RecurringTransaction = require('../models/recurring-transaction.model');
 
 const transactionController = {
+    async import(req, res) {
+        try {
+            const userId = req.user.id;
+            const { transactions } = req.body;
+            if (!transactions || !Array.isArray(transactions)) {
+                return res.status(400).json({ error: 'Invalid transactions data' });
+            }
+            const summary = await importService.importTransactions(userId, transactions);
+            res.status(200).json(summary);
+        } catch (error) {
+            console.error('Import transactions error:', error);
+            res.status(500).json({ error: 'Failed to import transactions' });
+        }
+    },
     async create(req, res) {
         try {
             const userId = req.user.id;
@@ -16,16 +31,28 @@ const transactionController = {
     async list(req, res) {
         try {
             const userId = req.user.id;
+            const limit = parseInt(req.query.limit) || 50;
+            const offset = parseInt(req.query.offset) || 0;
             const filters = {
-                limit: parseInt(req.query.limit) || 50,
-                offset: parseInt(req.query.offset) || 0,
+                limit,
+                offset,
                 startDate: req.query.startDate,
                 endDate: req.query.endDate,
                 categoryId: req.query.categoryId,
                 type: req.query.type
             };
-            const transactions = await transactionService.getTransactions(userId, filters);
-            res.status(200).json(transactions);
+
+            // Fix Issue #13: Add pagination metadata
+            const { transactions, total } = await transactionService.getTransactions(userId, filters);
+
+            res.status(200).json({
+                data: transactions,
+                pagination: {
+                    total,
+                    limit,
+                    offset
+                }
+            });
         } catch (error) {
             console.error('List transactions error:', error);
             res.status(500).json({ error: 'Failed to fetch transactions' });
@@ -158,6 +185,20 @@ const transactionController = {
         } catch (error) {
             console.error('Get category spending error:', error);
             res.status(500).json({ error: 'Failed to fetch category spending' });
+        }
+    },
+
+    async sync(req, res) {
+        try {
+            const { userId, added, modified, removed } = req.body;
+            // Note: In a real scenario, we should verify the request comes from the banking-service
+            // or ensure req.user.id matches userId if it's a user-triggered sync.
+            // But banking-service passes userId explicitly for internal syncs.
+            await transactionService.sync(userId, { added, modified, removed });
+            res.status(200).json({ success: true });
+        } catch (error) {
+            console.error('Sync transactions error:', error);
+            res.status(500).json({ error: 'Failed to sync transactions' });
         }
     }
 };

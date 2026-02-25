@@ -21,7 +21,8 @@ const authController = {
             const passwordHash = await authenticationService.hashPassword(password);
             const user = await User.create({ email, passwordHash, firstName, lastName });
 
-            const token = jwtService.generateToken({ id: user.id });
+            // Fix Issue #5: Include email and role in token
+            const token = jwtService.generateToken({ id: user.id, email: user.email, role: user.role });
             const refreshToken = jwtService.generateRefreshToken({ id: user.id });
 
             const expiresAt = new Date();
@@ -33,7 +34,9 @@ const authController = {
             const ipAddress = req.ip || req.connection.remoteAddress;
             await Session.create(user.id, token, deviceInfo, ipAddress);
 
-            res.status(201).json({ user, token, refreshToken });
+            // Fix Issue #17: Safe object copy instead of mutation
+            const { password_hash: _, ...safeUser } = user;
+            res.status(201).json({ user: safeUser, token, refreshToken });
         } catch (error) {
             console.error('Registration error:', error);
             res.status(500).json({ error: 'Failed to register user' });
@@ -63,7 +66,8 @@ const authController = {
                 }
             }
 
-            const token = jwtService.generateToken({ id: user.id });
+            // Fix Issue #5: Include email and role in token
+            const token = jwtService.generateToken({ id: user.id, email: user.email, role: user.role });
             const refreshToken = jwtService.generateRefreshToken({ id: user.id });
 
             await RefreshToken.deleteByUserId(user.id);
@@ -76,9 +80,10 @@ const authController = {
             const ipAddress = req.ip || req.connection.remoteAddress;
             await Session.create(user.id, token, deviceInfo, ipAddress);
 
-            delete user.password_hash;
+            // Fix Issue #17: Safe object copy instead of mutation
+            const { password_hash: _, mfa_secret: __, ...safeUser } = user;
 
-            res.status(200).json({ user, token, refreshToken });
+            res.status(200).json({ user: safeUser, token, refreshToken });
         } catch (error) {
             console.error('Login error:', error);
             res.status(500).json({ error: 'Failed to login' });
@@ -99,7 +104,11 @@ const authController = {
                 return res.status(401).json({ error: 'Refresh token expired or not found' });
             }
 
-            const token = jwtService.generateToken({ id: payload.id });
+            // Fix Issue #5: Need email/role for token, fetch user
+            const user = await User.findById(payload.id);
+            if (!user) return res.status(401).json({ error: 'User not found' });
+
+            const token = jwtService.generateToken({ id: user.id, email: user.email, role: user.role });
 
             // Track the new session
             const deviceInfo = req.headers['user-agent'] || 'Unknown';
@@ -186,7 +195,12 @@ const authController = {
     async verifyMFA(req, res) {
         try {
             const userId = req.user.id;
-            const { code, secret } = req.body;
+            const { code } = req.body; // Secret removed from req.body (Fix Issue #1)
+
+            const secret = await mfaService.getPendingSecret(userId);
+            if (!secret) {
+                return res.status(400).json({ error: 'MFA setup session expired. Please restart setup.' });
+            }
 
             const isValid = await mfaService.verifyCode(userId, code, secret);
             if (!isValid) {
@@ -194,6 +208,8 @@ const authController = {
             }
 
             await User.update(userId, { mfa_enabled: true, mfa_secret: secret });
+            await mfaService.clearPendingSecret(userId);
+
             res.status(200).json({ message: 'MFA verified and enabled successfully' });
         } catch (error) {
             console.error('MFA Verification error:', error);
@@ -204,6 +220,26 @@ const authController = {
     async disableMFA(req, res) {
         try {
             const userId = req.user.id;
+            const { code, password } = req.body;
+
+            // Fix Issue #2: Require MFA code or password to disable
+            const user = await User.findById(userId);
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            // If MFA is active, require code. If not, maybe just password or nothing (but here it should be active if they want to disable)
+            const dbUser = await User.findByEmail(user.email); // Need secret for verification
+
+            if (dbUser.mfa_enabled) {
+                if (!code) return res.status(400).json({ error: 'MFA code required to disable MFA' });
+                const isValid = await mfaService.verifyCode(userId, code, dbUser.mfa_secret);
+                if (!isValid) return res.status(401).json({ error: 'Invalid MFA code' });
+            } else if (password) {
+                const isValidPassword = await authenticationService.validateUser(user.email, password);
+                if (!isValidPassword) return res.status(401).json({ error: 'Invalid password' });
+            } else {
+                return res.status(400).json({ error: 'MFA code or password required' });
+            }
+
             await User.update(userId, { mfa_enabled: false, mfa_secret: null });
             res.status(200).json({ message: 'MFA disabled successfully' });
         } catch (error) {

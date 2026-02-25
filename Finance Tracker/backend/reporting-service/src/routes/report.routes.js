@@ -7,5 +7,6 @@ router.use(authMiddleware);
 
 router.get('/summary', reportController.getSummaryReport);
 router.get('/export', reportController.getExport);
+router.post('/schedule', reportController.scheduleReport);
 
 module.exports = router;

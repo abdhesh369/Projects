@@ -1,4 +1,6 @@
 const budgetService = require('../services/budget.service');
+const trackingService = require('../services/tracking.service');
+const alertService = require('../services/alert.service');
 
 const budgetController = {
     async create(req, res) {
@@ -43,6 +45,28 @@ const budgetController = {
         } catch (error) {
             console.error('Delete budget error:', error);
             res.status(500).json({ error: 'Failed to delete budget' });
+        }
+    },
+
+    async getTrackingSummary(req, res) {
+        try {
+            const userId = req.user.id;
+            const summary = await trackingService.getBudgetTrackingSummary(userId);
+            res.status(200).json(summary);
+        } catch (error) {
+            console.error('Tracking summary error:', error);
+            res.status(500).json({ error: 'Failed to fetch budget tracking summary' });
+        }
+    },
+
+    async getAlerts(req, res) {
+        try {
+            const userId = req.user.id;
+            const alerts = await alertService.checkBudgetThresholds(userId);
+            res.status(200).json(alerts);
+        } catch (error) {
+            console.error('Budget alerts error:', error);
+            res.status(500).json({ error: 'Failed to fetch budget alerts' });
         }
     }
 };

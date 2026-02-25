@@ -1,4 +1,6 @@
 const reportGenerationService = require('../services/report-generation.service');
+const exportService = require('../services/export.service');
+const schedulingService = require('../services/scheduling.service');
 
 const reportController = {
     async getSummaryReport(req, res) {
@@ -32,44 +34,26 @@ const reportController = {
             const transactions = await reportGenerationService.getTransactions(userId, { startDate, endDate });
 
             if (format === 'csv') {
-                const { Parser } = require('json2csv');
-                const fields = ['id', 'amount', 'type', 'category', 'date', 'description'];
-                const opts = { fields };
-
-                try {
-                    const parser = new Parser(opts);
-                    const csv = parser.parse(transactions);
-                    res.header('Content-Type', 'text/csv');
-                    res.attachment('transactions.csv');
-                    return res.send(csv);
-                } catch (err) {
-                    console.error(err);
-                    return res.status(500).json({ error: 'Failed to generated CSV' });
-                }
+                return exportService.generateCSV(transactions, res);
             } else if (format === 'pdf') {
-                const PDFDocument = require('pdfkit');
-                const doc = new PDFDocument();
-
-                res.header('Content-Type', 'application/pdf');
-                res.attachment('transactions.pdf');
-
-                doc.pipe(res);
-                doc.fontSize(20).text('Transaction Report', { align: 'center' });
-                doc.moveDown();
-
-                transactions.forEach(t => {
-                    doc.fontSize(12).text(`${new Date(t.date).toISOString().split('T')[0]} - ${t.description}`);
-                    doc.fontSize(10).text(`Amount: $${t.amount} | Type: ${t.type} | Category: ${t.categoryId || t.category || 'N/A'}`);
-                    doc.moveDown(0.5);
-                });
-
-                doc.end();
+                return exportService.generatePDF(transactions, res);
             } else {
                 return res.status(400).json({ error: 'Invalid format. Use csv or pdf.' });
             }
         } catch (error) {
             console.error('[Reporting] Export generation error:', error);
             res.status(500).json({ error: 'Failed to export report' });
+        }
+    },
+
+    async scheduleReport(req, res) {
+        try {
+            const userId = req.user.id;
+            const schedule = await schedulingService.scheduleReport(userId, req.body);
+            res.status(201).json(schedule);
+        } catch (error) {
+            console.error('[Reporting] Schedule report error:', error);
+            res.status(500).json({ error: 'Failed to schedule report' });
         }
     }
 };

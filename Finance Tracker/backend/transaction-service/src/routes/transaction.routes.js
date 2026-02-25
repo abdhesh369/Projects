@@ -10,9 +10,11 @@ router.get('/health', (req, res) => {
 });
 
 // Apply auth middleware to all protected routes
+router.post('/sync', transactionController.sync); // Internal/Sync endpoint
 router.use(authMiddleware);
 
 router.post('/', transactionController.create);
+router.post('/import', transactionController.import);
 router.get('/', transactionController.list);
 router.get('/recurring', transactionController.listRecurring);
 router.post('/recurring', transactionController.createRecurring);

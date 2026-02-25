@@ -4,6 +4,10 @@ const TRANSACTION_SERVICE_URL = process.env.TRANSACTION_SERVICE_URL || 'http://l
 const ACCOUNT_SERVICE_URL = process.env.ACCOUNT_SERVICE_URL || 'http://localhost:3002';
 const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
 
+const forecastingService = require('../services/forecasting.service');
+const insightsService = require('../services/insights.service');
+const trendDetectionService = require('../services/trend-detection.service');
+
 const analyticsController = {
     async getSummary(req, res) {
         try {
@@ -125,6 +129,39 @@ const analyticsController = {
         } catch (error) {
             console.error('Account balance trend error:', error.message);
             res.status(500).json({ error: 'Failed to fetch balance trend' });
+        }
+    },
+
+    async getForecasting(req, res) {
+        try {
+            const userId = req.user.id;
+            const forecast = await forecastingService.predictNextMonthSpending(userId);
+            res.status(200).json(forecast);
+        } catch (error) {
+            console.error('Forecasting error:', error.message);
+            res.status(500).json({ error: 'Failed to generate spending forecast' });
+        }
+    },
+
+    async getInsights(req, res) {
+        try {
+            const userId = req.user.id;
+            const insights = await insightsService.generateInsights(userId);
+            res.status(200).json(insights);
+        } catch (error) {
+            console.error('Insights error:', error.message);
+            res.status(500).json({ error: 'Failed to generate spending insights' });
+        }
+    },
+
+    async getTrends(req, res) {
+        try {
+            const userId = req.user.id;
+            const trends = await trendDetectionService.detectSpendingTrends(userId);
+            res.status(200).json(trends);
+        } catch (error) {
+            console.error('Trend detection error:', error.message);
+            res.status(500).json({ error: 'Failed to detect spending trends' });
         }
     }
 };

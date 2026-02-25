@@ -4,7 +4,13 @@
     "main": "src/server.js",
     "scripts": {
         "start": "node src/server.js",
-        "dev": "nodemon src/server.js"
+        "dev": "nodemon src/server.js",
+        "test": "jest"
+    },
+    "jest": {
+        "setupFiles": [
+            "<rootDir>/jest.setup.js"
+        ]
     },
     "dependencies": {
         "cors": "^2.8.5",
@@ -16,6 +22,7 @@
         "stripe": "^17.5.0"
     },
     "devDependencies": {
+        "jest": "^30.2.0",
         "nodemon": "^3.0.1"
     }
 }
