@@ -70,10 +70,3 @@ function WeatherChart({ data }) {
 }
 
 export default WeatherChart;
-
-
-
-//zi3BiT0Q8IeEjQWs
-///canikissyoucutie369_db_user
-
-//mongodb+srv://canikissyoucutie369_db_user:zi3BiT0Q8IeEjQWs@weatherdashboardproject.a8jgpq2.mongodb.net/?appName=WeatherDashboardProject
