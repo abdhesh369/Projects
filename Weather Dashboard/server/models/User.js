@@ -14,6 +14,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    favoriteCities: {
+      type: [String],
+      default: [],
+    },
+    unitPreference: {
+      type: String,
+      enum: ['metric', 'imperial'],
+      default: 'metric',
+    },
   },
   {
     timestamps: true,

@@ -1,29 +1,68 @@
-import React from "react";
+import {
+  WiDaySunny,
+  WiCloudy,
+  WiRain,
+  WiSnow,
+  WiThunderstorm,
+  WiFog,
+  WiDayCloudy,
+} from "react-icons/wi";
 
-const dummyWeatherData = {
-  city: "London",
-  country: "GB",
-  temperature: 15,
-  description: "clear sky",
-  icon: "01d",
-  humidity: 87,
-  windSpeed: 4.63,
-  feelsLike: 14.3,
+const getWeatherIcon = (condition) => {
+  switch (condition.toLowerCase()) {
+    case "clear":
+      return <WiDaySunny />;
+    case "clouds":
+      return <WiCloudy />;
+    case "rain":
+    case "drizzle":
+      return <WiRain />;
+    case "snow":
+      return <WiSnow />;
+    case "thunderstorm":
+      return <WiThunderstorm />;
+    case "fog":
+    case "mist":
+    case "haze":
+      return <WiFog />;
+    default:
+      return <WiDayCloudy />;
+  }
 };
 
-function CurrentWeather({ weatherData, onSetDefault }) {
+function CurrentWeather({ weatherData, onSetDefault, convertTemp, units }) {
+  const { isAuthenticated, token } = useContext(AuthContext);
+
   const {
     city,
     country,
     temperature,
     description,
-    icon,
+    condition,
     humidity,
     windSpeed,
     feelsLike,
   } = weatherData;
 
-  const iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+  const handleAddToFavorites = async () => {
+    try {
+      await axios.post(
+        "/api/favorites",
+        { city: `${city}, ${country}` },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert(`${city} added to favorites!`);
+    } catch (error) {
+      console.error("Error adding to favorites:", error);
+      alert("Failed to add city to favorites.");
+    }
+  };
+
+  const unitLabel = units === 'metric' ? '°C' : '°F';
 
   return (
     <>
@@ -32,18 +71,27 @@ function CurrentWeather({ weatherData, onSetDefault }) {
           {city}, {country}
         </h2>
         <div className="weather-main">
-          <img src={iconUrl} alt={description} className="weather-icon" />
-          <p className="temperature">{Math.round(temperature)}°C</p>
+          <div className="weather-icon-large">
+            {getWeatherIcon(condition)}
+          </div>
+          <p className="temperature">{convertTemp(temperature)}{unitLabel}</p>
         </div>
         <p className="weather-description">{description}</p>
         <div className="weather-details">
-          <p>Feels like: {Math.round(feelsLike)}°C</p>
+          <p>Feels like: {convertTemp(feelsLike)}{unitLabel}</p>
           <p>Humidity: {humidity}%</p>
           <p>Wind: {windSpeed} m/s</p>
         </div>
-        <button onClick={() => onSetDefault(city)} className="btn-set-default">
-          Set as Default
-        </button>
+        <div className="weather-actions">
+          <button onClick={() => onSetDefault(city)} className="btn-set-default">
+            Set as Default
+          </button>
+          {isAuthenticated && (
+            <button onClick={handleAddToFavorites} className="btn-add-favorite">
+              Add to Favorites
+            </button>
+          )}
+        </div>
       </div>
     </>
   );

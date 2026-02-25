@@ -23,8 +23,9 @@ function Navbar() {
       </div>
       <div className="navbar-links">
         <Link to="/">Dashboard</Link>
+
         {isAuthenticated ? (
-          <button onClick={handleLogout}>Logout</button>
+          <button onClick={handleLogout} className="btn-logout">Logout</button>
         ) : (
           <>
             <Link to="/login">Login</Link>

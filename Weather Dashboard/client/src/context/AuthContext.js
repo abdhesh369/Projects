@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
@@ -39,6 +40,17 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     login,
     logout,
+    updateUnitPreference: async (newUnits) => {
+      if (isAuthenticated) {
+        try {
+          // Future: Implement PATCH /api/user/preferences
+          // For now, we'll just keep it in localStorage as placeholder 
+          // but the schema is ready.
+        } catch (err) {
+          console.error('Failed to sync preferences');
+        }
+      }
+    }
   };
 
   return (

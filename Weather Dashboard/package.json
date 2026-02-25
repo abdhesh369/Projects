@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "mongodb": "^7.1.0"
+  "name": "weather-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "build-client": "cd client && npm run build",
+    "build": "npm run install-client && npm run build-client && npm run install-server",
+    "start": "cd server && node index.js"
   }
 }

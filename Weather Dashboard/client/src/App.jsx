@@ -9,8 +9,10 @@ import SearchForm from './components/SearchForm';
 import CurrentWeather from './components/CurrentWeather';
 import Forecast from './components/Forecast';
 import WeatherChart from './components/WeatherChart';
+import FavoritesList from './components/FavoritesList';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import UnitToggle from './components/UnitToggle';
 
 import './App.css';
 
@@ -19,6 +21,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [units, setUnits] = useState(localStorage.getItem('units') || 'metric');
+
+  useEffect(() => {
+    localStorage.setItem('units', units);
+  }, [units]);
 
   useEffect(() => {
     const storedHistory = localStorage.getItem('searchHistory');
@@ -27,28 +34,40 @@ function App() {
     }
     const defaultCity = localStorage.getItem('defaultCity');
     if (defaultCity) {
-      fetchWeather(defaultCity);
+      fetchWeather({ city: defaultCity });
+    } else {
+      // Try geolocation as fallback if no default city
+      handleUseMyLocation();
     }
   }, []);
+
+  const convertTemp = (tempInCelsius) => {
+    if (units === 'metric') return Math.round(tempInCelsius);
+    return Math.round((tempInCelsius * 9 / 5) + 32);
+  };
 
   const handleSetDefault = (city) => {
     localStorage.setItem('defaultCity', city);
     alert(`${city} has been set as your default city!`);
   };
 
-  const fetchWeather = async (city) => {
+  const fetchWeather = async (params) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch weather data');
+      let url = '/api/weather';
+      if (params.city) {
+        url += `?city=${encodeURIComponent(params.city)}`;
+      } else if (params.lat && params.lon) {
+        url = `/api/weather/coords?lat=${params.lat}&lon=${params.lon}`;
       }
-      const data = await response.json();
+
+      const response = await axios.get(url);
+      const data = response.data;
       setWeatherData(data);
 
-      const newCity = data.current.city;
-      const updatedHistory = [newCity, ...searchHistory.filter(item => item !== newCity)].slice(0, 5);
+      const cityName = data.current.city;
+      const updatedHistory = [cityName, ...searchHistory.filter(item => item !== cityName)].slice(0, 5);
       setSearchHistory(updatedHistory);
       localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
     } catch (err) {
@@ -57,6 +76,25 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        fetchWeather({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      () => {
+        setError("Unable to retrieve your location");
+      }
+    );
   };
 
   return (
@@ -69,8 +107,16 @@ function App() {
             element={
               <>
                 <header>
-                  <h1>Weather Dashboard</h1>
-                  <SearchForm onSearch={fetchWeather} />
+                  <div className="header-top">
+                    <h1>Weather Dashboard</h1>
+                    <UnitToggle units={units} setUnits={setUnits} />
+                  </div>
+                  <div className="search-container">
+                    <SearchForm onSearch={(city) => fetchWeather({ city })} />
+                    <button className="btn-location" onClick={handleUseMyLocation} title="Use my current location">
+                      Use My Location
+                    </button>
+                  </div>
                   {searchHistory.length > 0 && (
                     <div className="search-history">
                       <h3>Recent Searches</h3>
@@ -79,7 +125,7 @@ function App() {
                           <li
                             key={city}
                             className="history-item"
-                            onClick={() => fetchWeather(city)}
+                            onClick={() => fetchWeather({ city })}
                           >
                             {city}
                           </li>
@@ -87,18 +133,28 @@ function App() {
                       </ul>
                     </div>
                   )}
+                  <FavoritesList onCityClick={(city) => fetchWeather({ city })} />
                 </header>
                 <main>
                   {loading && <p className="loading-message">Loading...</p>}
                   {error && !loading && <p className="error-message">{error}</p>}
                   {weatherData && !loading && !error && (
                     <>
-                      <CurrentWeather weatherData={weatherData.current} onSetDefault={handleSetDefault} />
-                      <Forecast forecastData={weatherData.forecast} />
+                      <CurrentWeather
+                        weatherData={weatherData.current}
+                        onSetDefault={handleSetDefault}
+                        convertTemp={convertTemp}
+                        units={units}
+                      />
+                      <Forecast
+                        forecastData={weatherData.forecast}
+                        convertTemp={convertTemp}
+                        units={units}
+                      />
                       {(() => {
                         const chartData = weatherData.forecast.map(day => ({
                           name: day.day,
-                          temperature: Math.round(day.tempHigh),
+                          temperature: convertTemp(day.tempHigh),
                         }));
                         return <WeatherChart data={chartData} />;
                       })()}

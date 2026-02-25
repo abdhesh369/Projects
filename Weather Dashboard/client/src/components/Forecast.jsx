@@ -17,22 +17,15 @@ const dummyForecastData = [
 
 // This component will receive the forecast data array via props.
 // We use a default value for development, just like in our other components.
-function Forecast({ forecastData = dummyForecastData }) {
+function Forecast({ forecastData = [], convertTemp, units }) {
   return (
     <div className="forecast-container">
-      {/* We use the standard JavaScript .map() function to iterate over our forecastData array. */}
-      {/* For each `day` object in the array, we return a <ForecastCard> component. */}
       {forecastData.map((day, index) => (
-        // This is the core of list rendering in React.
         <ForecastCard
-          // The `key` prop is crucial for React's performance and stability.
-          // It helps React identify which items have changed, are added, or are removed.
-          // Keys should be stable, predictable, and unique among their siblings.
-          // For now, the day name + index is a decent unique key. In a real app, you'd use a unique ID from the API.
           key={`${day.day}-${index}`}
-          // We pass the individual `day` object as the `dayData` prop to the ForecastCard.
-          // This is how each card gets its unique information to display.
           dayData={day}
+          convertTemp={convertTemp}
+          units={units}
         />
       ))}
     </div>
