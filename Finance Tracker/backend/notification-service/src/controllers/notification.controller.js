@@ -2,6 +2,7 @@ const emailService = require('../services/email.service');
 const pushService = require('../services/push.service');
 const inAppService = require('../services/in-app.service');
 const smsService = require('../services/sms.service');
+const realtimeService = require('../services/realtime.service');
 
 const notificationController = {
     async sendNotification(req, res) {
@@ -18,6 +19,8 @@ const notificationController = {
                     break;
                 case 'in-app':
                     result = await inAppService.createNotification({ userId: recipient, ...content });
+                    // Push real-time alert to connected clients
+                    realtimeService.sendNotificationAlert(recipient, result);
                     break;
                 case 'sms':
                     result = await smsService.sendSms({ to: recipient, ...content });

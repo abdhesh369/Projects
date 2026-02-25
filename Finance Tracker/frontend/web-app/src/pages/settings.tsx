@@ -16,7 +16,10 @@ import { Layout, Button, Card, Input } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { userService } from '../services/userService';
+import { authService } from '../services/auth';
 import { auditService, AuditLog } from '../services/auditService';
+import { sessionService, UserSession } from '../services/sessionService';
+import { billingService, StripeInvoice } from '../services/billingService';
 import styles from '../styles/Settings.module.css';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -60,8 +63,15 @@ export default function Settings() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+    const [is2FAEnabled, setIs2FAEnabled] = useState(user?.mfaEnabled || false);
     const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+    const [sessions, setSessions] = useState<UserSession[]>([]);
+    const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
+    // Billing State
+    const [invoices, setInvoices] = useState<StripeInvoice[]>([]);
+    const [subscription, setSubscription] = useState<any>(null);
+    const [isLoadingBilling, setIsLoadingBilling] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -74,7 +84,41 @@ export default function Settings() {
         if (activeSection === 'activity') {
             fetchAuditLogs();
         }
+        if (activeSection === 'security') {
+            fetchSessions();
+        }
+        if (activeSection === 'billing') {
+            fetchBillingData();
+        }
     }, [activeSection]);
+
+    const fetchSessions = async () => {
+        setIsLoadingSessions(true);
+        try {
+            const data = await sessionService.getSessions();
+            setSessions(data);
+        } catch (error) {
+            console.error('Failed to fetch sessions:', error);
+        } finally {
+            setIsLoadingSessions(false);
+        }
+    };
+
+    const fetchBillingData = async () => {
+        setIsLoadingBilling(true);
+        try {
+            const [invoiceData, subData] = await Promise.all([
+                billingService.getInvoices(),
+                billingService.getSubscription()
+            ]);
+            setInvoices(invoiceData);
+            setSubscription(subData);
+        } catch (error) {
+            console.error('Failed to fetch billing data:', error);
+        } finally {
+            setIsLoadingBilling(false);
+        }
+    };
 
     const fetchAuditLogs = async () => {
         setIsLoadingLogs(true);

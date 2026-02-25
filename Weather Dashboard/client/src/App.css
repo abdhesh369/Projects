@@ -120,3 +120,21 @@
 .navbar-links a:hover {
   color: #3b82f6;
 }
+
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: #ef4444; 
+  cursor: pointer;
+  font-family: inherit; 
+  font-size: 1rem;
+  font-weight: 500;
+  margin-left: 1.5rem;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.btn-logout:hover {
+  color: #dc2626; 
+}

@@ -4,6 +4,7 @@ export interface User {
     email: string;
     firstName: string;
     lastName: string;
+    mfaEnabled: boolean;
     avatar?: string;
     createdAt: string;
     preferences: UserPreferences;

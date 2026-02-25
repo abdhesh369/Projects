@@ -15,5 +15,6 @@ router.post('/webhooks', bankingController.processWebhook);
 router.use(authMiddleware);
 router.get('/link-token', bankingController.getLinkToken);
 router.post('/link-token/exchange', bankingController.handlePublicToken);
+router.post('/sync', bankingController.manualSync);
 
 module.exports = router;

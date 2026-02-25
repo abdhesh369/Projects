@@ -18,12 +18,14 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 
 const userRoutes = require('./routes/user.routes');
+const billingRoutes = require('./routes/billing.routes');
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'user-service' });
 });
 
 app.use('/', userRoutes);
+app.use('/billing', billingRoutes);
 
 app.listen(PORT, () => {
     console.log(`User Service running on port ${PORT}`);

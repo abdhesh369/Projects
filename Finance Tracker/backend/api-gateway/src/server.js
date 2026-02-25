@@ -75,6 +75,7 @@ app.use('/api/notifications', rateLimit, createServiceProxy(process.env.NOTIFICA
 app.use('/api/reporting', rateLimit, createServiceProxy(process.env.REPORTING_SERVICE_URL || 'http://localhost:3008'));
 app.use('/api/transactions', rateLimit, createServiceProxy(process.env.TRANSACTIONS_SERVICE_URL || 'http://localhost:3009'));
 app.use('/api/analytics', rateLimit, createServiceProxy(process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3003'));
+app.use('/api/billing', rateLimit, createServiceProxy(process.env.USERS_SERVICE_URL || 'http://localhost:3010'));
 
 app.listen(PORT, () => {
     console.log(`API Gateway running on port ${PORT}`);

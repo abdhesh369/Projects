@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { Layout, Button, Card } from '../components/common';
 import { analyticsService } from '../services/analyticsService';
+import { transactionService } from '../services/transactionService';
 import { DashboardSummary, CategoryBreakdown, ChartDataPoint } from '../types';
 import styles from '../styles/Reports.module.css';
 
@@ -34,9 +35,9 @@ export default function Reports() {
         const fetchReportData = async () => {
             try {
                 const [summaryData, breakdownData, trendData] = await Promise.all([
-                    analyticsService.getSummary(),
-                    analyticsService.getCategoryBreakdown(),
-                    analyticsService.getSpendingTrend(),
+                    analyticsService.getSummary(dateRange),
+                    analyticsService.getCategoryBreakdown(dateRange),
+                    analyticsService.getSpendingTrend(dateRange),
                 ]);
                 setSummary(summaryData);
                 setCategories(breakdownData);
@@ -58,6 +59,21 @@ export default function Reports() {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
         });
+    };
+
+    const handleExport = async () => {
+        try {
+            const blob = await transactionService.exportTransactions('csv', {
+                startDate: dateRange === '1m' ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() : undefined // Simplified for now
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report-${dateRange}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        } catch (error) {
+            console.error('Export failed:', error);
+        }
     };
 
     return (
@@ -89,7 +105,7 @@ export default function Reports() {
                                     <option value="1y">Last year</option>
                                 </select>
                             </div>
-                            <Button variant="secondary" leftIcon={<ArrowDownTrayIcon />}>
+                            <Button variant="secondary" leftIcon={<ArrowDownTrayIcon />} onClick={handleExport}>
                                 Export Report
                             </Button>
                         </div>

@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const http = require('http');
+const realtimeService = require('./services/realtime.service');
 
 const app = express();
 const PORT = process.env.PORT || 3007;
@@ -25,6 +27,10 @@ app.get('/health', (req, res) => {
 const notificationRoutes = require('./routes/notification.routes');
 app.use('/', notificationRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Notification Service running on port ${PORT}`);
+// Create HTTP server and attach Socket.IO
+const server = http.createServer(app);
+realtimeService.init(server);
+
+server.listen(PORT, () => {
+    console.log(`Notification Service running on port ${PORT} (with WebSocket support)`);
 });
