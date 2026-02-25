@@ -4,7 +4,7 @@ const complianceService = {
     async purgeOldLogs(daysRetention) {
         const query = `
             DELETE FROM audit_logs 
-            WHERE created_at < NOW() - INTERVAL '$1 days';
+            WHERE created_at < NOW() - (INTERVAL '1 day' * $1);
         `;
         const { rowCount } = await db.query(query, [daysRetention]);
         console.log(`[Audit] Compliance: Purged ${rowCount} logs older than ${daysRetention} days.`);

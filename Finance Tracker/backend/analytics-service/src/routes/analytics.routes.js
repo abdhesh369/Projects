@@ -8,5 +8,7 @@ router.use(authMiddleware);
 router.get('/summary', analyticsController.getSummary);
 router.get('/category-breakdown', analyticsController.getCategoryBreakdown);
 router.get('/spending-trend', analyticsController.getSpendingTrend);
+router.get('/income-vs-expenses', analyticsController.getIncomeVsExpenses);
+router.get('/balance-trend', analyticsController.getAccountBalanceTrend);
 
 module.exports = router;

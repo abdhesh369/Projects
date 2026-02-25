@@ -14,6 +14,7 @@ import {
     BellIcon,
     ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
+import { NotificationDropdown } from './NotificationDropdown';
 import styles from './Layout.module.css';
 
 interface LayoutProps {
@@ -138,10 +139,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </button>
 
                     <div className={styles.headerRight}>
-                        <button className={styles.notificationButton}>
-                            <BellIcon />
-                            <span className={styles.notificationBadge}>3</span>
-                        </button>
+                        <NotificationDropdown />
                     </div>
                 </header>
 

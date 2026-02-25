@@ -31,7 +31,8 @@ const Budget = {
     },
 
     async update(id, userId, updates) {
-        const fields = Object.keys(updates);
+        const ALLOWED_FIELDS = ['category_id', 'amount', 'period', 'start_date'];
+        const fields = Object.keys(updates).filter(key => ALLOWED_FIELDS.includes(key));
         if (fields.length === 0) return null;
 
         const setClause = fields.map((field, index) => `${field} = $${index + 3}`).join(', ');
@@ -41,7 +42,7 @@ const Budget = {
             WHERE id = $1 AND user_id = $2
             RETURNING *;
         `;
-        const values = [id, userId, ...Object.values(updates)];
+        const values = [id, userId, ...fields.map(f => updates[f])];
         const { rows } = await db.query(query, values);
         return rows[0];
     },
@@ -50,16 +51,6 @@ const Budget = {
         const query = 'DELETE FROM budgets WHERE id = $1 AND user_id = $2 RETURNING id';
         const { rows } = await db.query(query, [id, userId]);
         return rows[0];
-    },
-
-    async getBudgetStatus(userId, categoryId, startDate, endDate) {
-        const query = `
-            SELECT COALESCE(SUM(amount), 0) as current_spending
-            FROM transactions
-            WHERE user_id = $1 AND category_id = $2 AND date >= $3 AND date <= $4 AND type = 'expense';
-        `;
-        const { rows } = await db.query(query, [userId, categoryId, startDate, endDate]);
-        return rows[0].current_spending;
     }
 };
 

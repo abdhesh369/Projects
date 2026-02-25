@@ -7,7 +7,7 @@ import {
     BuildingLibraryIcon,
     WalletIcon,
 } from '@heroicons/react/24/outline';
-import { Layout, Button, Card } from '../components/common';
+import { Layout, Button, Card, PlaidLinkButton } from '../components/common';
 import { accountService } from '../services/accountService';
 import { Account } from '../types';
 import styles from '../styles/Accounts.module.css';
@@ -25,18 +25,18 @@ export default function Accounts() {
     const [selectedType, setSelectedType] = useState<string>('all');
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchAccounts = async () => {
-            try {
-                const data = await accountService.getAccounts();
-                setAccounts(data);
-            } catch (error) {
-                console.error('Failed to fetch accounts:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    const fetchAccounts = async () => {
+        try {
+            const data = await accountService.getAccounts();
+            setAccounts(data);
+        } catch (error) {
+            console.error('Failed to fetch accounts:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchAccounts();
     }, []);
 
@@ -81,9 +81,7 @@ export default function Accounts() {
                             <h1 className={styles.title}>Accounts</h1>
                             <p className={styles.subtitle}>Manage your bank accounts and financial assets</p>
                         </div>
-                        <Button variant="primary" leftIcon={<PlusIcon />}>
-                            Add Account
-                        </Button>
+                        <PlaidLinkButton onSuccessCallback={fetchAccounts} />
                     </div>
 
                     {/* Summary Cards */}
@@ -169,10 +167,9 @@ export default function Accounts() {
 
                         {/* Add Account Card */}
                         {!isLoading && (
-                            <Card className={styles.addAccountCard} onClick={() => { }}>
-                                <PlusIcon className={styles.addIcon} />
-                                <span>Add New Account</span>
-                            </Card>
+                            <div className={styles.addAccountWrapper}>
+                                <PlaidLinkButton onSuccessCallback={fetchAccounts} />
+                            </div>
                         )}
                     </div>
                 </div>

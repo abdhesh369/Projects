@@ -1,14 +1,22 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 3010;
 
-app.use(cors());
-app.use(express.json());
+if (!process.env.INTERNAL_SERVICE_TOKEN) {
+    console.error('FATAL: INTERNAL_SERVICE_TOKEN not configured');
+    process.exit(1);
+}
 
-const authMiddleware = require('./middleware/auth');
+app.use(helmet());
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : false,
+    credentials: true
+}));
+app.use(express.json({ limit: '10kb' }));
+
 const userRoutes = require('./routes/user.routes');
 
 app.get('/health', (req, res) => {

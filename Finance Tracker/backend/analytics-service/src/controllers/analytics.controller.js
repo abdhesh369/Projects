@@ -1,26 +1,26 @@
-const db = require('../config/db');
+const axios = require('axios');
+
+const TRANSACTION_SERVICE_URL = process.env.TRANSACTION_SERVICE_URL || 'http://localhost:3009';
+const ACCOUNT_SERVICE_URL = process.env.ACCOUNT_SERVICE_URL || 'http://localhost:3002';
+const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
 
 const analyticsController = {
     async getSummary(req, res) {
         try {
             const userId = req.user.id;
+            const headers = { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN, 'X-User-Id': userId };
 
-            // Total Balance (from accounts)
-            const balanceQuery = 'SELECT SUM(balance) as total_balance FROM accounts WHERE user_id = $1 AND is_active = TRUE';
-            const { rows: balanceRows } = await db.query(balanceQuery, [userId]);
-            const totalBalance = parseFloat(balanceRows[0].total_balance) || 0;
+            // Total Balance (from account-service)
+            const balanceResponse = await axios.get(`${ACCOUNT_SERVICE_URL}/total-balance`, { headers });
+            const totalBalance = parseFloat(balanceResponse.data.total_balance) || 0;
 
-            // Income and Expenses (from transactions)
-            const statsQuery = `
-                SELECT 
-                    SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-                    SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expenses
-                FROM transactions 
-                WHERE user_id = $1
-            `;
-            const { rows: statsRows } = await db.query(statsQuery, [userId]);
-            const totalIncome = parseFloat(statsRows[0].total_income) || 0;
-            const totalExpenses = parseFloat(statsRows[0].total_expenses) || 0;
+            // Income and Expenses (from transaction-service)
+            // We'll use the /summary endpoint which returns {total_income, total_expenses, net_balance}
+            const statsResponse = await axios.get(`${TRANSACTION_SERVICE_URL}/summary`, { headers });
+            const { total_income, total_expenses } = statsResponse.data;
+
+            const totalIncome = parseFloat(total_income) || 0;
+            const totalExpenses = parseFloat(total_expenses) || 0;
 
             // Savings Rate
             const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
@@ -32,7 +32,7 @@ const analyticsController = {
                 savingsRate: Math.round(savingsRate * 100) / 100
             });
         } catch (error) {
-            console.error('Analytics summary error:', error);
+            console.error('Analytics summary error:', error.message);
             res.status(500).json({ error: 'Failed to fetch analytics summary' });
         }
     },
@@ -40,20 +40,11 @@ const analyticsController = {
     async getCategoryBreakdown(req, res) {
         try {
             const userId = req.user.id;
+            const headers = { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN, 'X-User-Id': userId };
 
-            const query = `
-                SELECT 
-                    c.id as category_id,
-                    c.name as category_name,
-                    c.color as color,
-                    SUM(t.amount) as amount
-                FROM transactions t
-                JOIN categories c ON t.category_id = c.id
-                WHERE t.user_id = $1 AND t.type = 'expense'
-                GROUP BY c.id, c.name, c.color
-                ORDER BY amount DESC
-            `;
-            const { rows } = await db.query(query, [userId]);
+            // Call transaction-service/categories/breakdown
+            const response = await axios.get(`${TRANSACTION_SERVICE_URL}/categories/breakdown`, { headers });
+            const rows = response.data;
 
             const totalExpense = rows.reduce((acc, row) => acc + parseFloat(row.amount), 0);
 
@@ -65,7 +56,7 @@ const analyticsController = {
 
             res.status(200).json(breakdown);
         } catch (error) {
-            console.error('Category breakdown error:', error);
+            console.error('Category breakdown error:', error.message);
             res.status(500).json({ error: 'Failed to fetch category breakdown' });
         }
     },
@@ -73,28 +64,67 @@ const analyticsController = {
     async getSpendingTrend(req, res) {
         try {
             const userId = req.user.id;
+            const headers = { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN, 'X-User-Id': userId };
 
-            const query = `
-                SELECT 
-                    TO_CHAR(date, 'YYYY-MM') as month,
-                    SUM(amount) as value
-                FROM transactions
-                WHERE user_id = $1 AND type = 'expense'
-                GROUP BY month
-                ORDER BY month ASC
-                LIMIT 12
-            `;
-            const { rows } = await db.query(query, [userId]);
-
-            const trend = rows.map(row => ({
+            const response = await axios.get(`${TRANSACTION_SERVICE_URL}/trends/spending`, { headers });
+            const trend = response.data.map(row => ({
                 date: row.month,
                 value: parseFloat(row.value)
             }));
 
             res.status(200).json(trend);
         } catch (error) {
-            console.error('Spending trend error:', error);
+            console.error('Spending trend error:', error.message);
             res.status(500).json({ error: 'Failed to fetch spending trend' });
+        }
+    },
+
+    async getIncomeVsExpenses(req, res) {
+        try {
+            const userId = req.user.id;
+            const headers = { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN, 'X-User-Id': userId };
+
+            const response = await axios.get(`${TRANSACTION_SERVICE_URL}/trends/income-vs-expenses`, { headers });
+            const result = response.data.map(row => ({
+                month: row.month,
+                income: parseFloat(row.income),
+                expenses: parseFloat(row.expenses)
+            }));
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Income vs Expenses error:', error.message);
+            res.status(500).json({ error: 'Failed to fetch income vs expenses' });
+        }
+    },
+
+    async getAccountBalanceTrend(req, res) {
+        try {
+            const userId = req.user.id;
+            const headers = { 'X-Internal-Token': INTERNAL_SERVICE_TOKEN, 'X-User-Id': userId };
+
+            // 1. Get net flow trend from transaction-service
+            const netFlowResponse = await axios.get(`${TRANSACTION_SERVICE_URL}/trends/net-flow`, { headers });
+            const rows = netFlowResponse.data;
+
+            // 2. Get current total balance from account-service
+            const balanceResponse = await axios.get(`${ACCOUNT_SERVICE_URL}/total-balance`, { headers });
+            let currentBalance = parseFloat(balanceResponse.data.total_balance) || 0;
+
+            const trend = [];
+            // We iterate backwards from current month
+            const sortedRows = [...rows].reverse();
+            for (const row of sortedRows) {
+                trend.push({
+                    month: row.month,
+                    balance: currentBalance
+                });
+                currentBalance -= parseFloat(row.net_flow);
+            }
+
+            res.status(200).json(trend.reverse());
+        } catch (error) {
+            console.error('Account balance trend error:', error.message);
+            res.status(500).json({ error: 'Failed to fetch balance trend' });
         }
     }
 };

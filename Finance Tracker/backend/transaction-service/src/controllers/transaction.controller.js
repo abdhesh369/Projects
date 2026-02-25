@@ -1,4 +1,5 @@
 const transactionService = require('../services/transaction.service');
+const RecurringTransaction = require('../models/recurring-transaction.model');
 
 const transactionController = {
     async create(req, res) {
@@ -63,6 +64,100 @@ const transactionController = {
         } catch (error) {
             console.error('Delete transaction error:', error);
             res.status(500).json({ error: 'Failed to delete transaction' });
+        }
+    },
+
+    async createRecurring(req, res) {
+        try {
+            const userId = req.user.id;
+            const rt = await RecurringTransaction.create({ ...req.body, userId });
+            res.status(201).json(rt);
+        } catch (error) {
+            console.error('Create recurring error:', error);
+            res.status(500).json({ error: 'Failed to create recurring transaction' });
+        }
+    },
+
+    async listRecurring(req, res) {
+        try {
+            const userId = req.user.id;
+            const rts = await RecurringTransaction.findByUserId(userId);
+            res.status(200).json(rts);
+        } catch (error) {
+            console.error('List recurring error:', error);
+            res.status(500).json({ error: 'Failed to fetch recurring transactions' });
+        }
+    },
+
+    async getSummary(req, res) {
+        try {
+            const userId = req.user.id;
+            const { startDate, endDate } = req.query;
+            const summary = await transactionService.getSummary(userId, { startDate, endDate });
+            res.status(200).json(summary);
+        } catch (error) {
+            console.error('Get summary error:', error);
+            res.status(500).json({ error: 'Failed to fetch transaction summary' });
+        }
+    },
+
+    async getCategoryBreakdown(req, res) {
+        try {
+            const userId = req.user.id;
+            const { startDate, endDate } = req.query;
+            const breakdown = await transactionService.getCategoryBreakdown(userId, { startDate, endDate });
+            res.status(200).json(breakdown);
+        } catch (error) {
+            console.error('Get breakdown error:', error);
+            res.status(500).json({ error: 'Failed to fetch category breakdown' });
+        }
+    },
+
+    async getSpendingTrend(req, res) {
+        try {
+            const userId = req.user.id;
+            const { limit } = req.query;
+            const trend = await transactionService.getSpendingTrend(userId, { limit });
+            res.status(200).json(trend);
+        } catch (error) {
+            console.error('Get spending trend error:', error);
+            res.status(500).json({ error: 'Failed to fetch spending trend' });
+        }
+    },
+
+    async getIncomeVsExpenses(req, res) {
+        try {
+            const userId = req.user.id;
+            const { limit } = req.query;
+            const trend = await transactionService.getIncomeVsExpenses(userId, { limit });
+            res.status(200).json(trend);
+        } catch (error) {
+            console.error('Get income vs expenses error:', error);
+            res.status(500).json({ error: 'Failed to fetch income vs expenses' });
+        }
+    },
+
+    async getNetFlowTrend(req, res) {
+        try {
+            const userId = req.user.id;
+            const trend = await transactionService.getNetFlowTrend(userId);
+            res.status(200).json(trend);
+        } catch (error) {
+            console.error('Get net flow trend error:', error);
+            res.status(500).json({ error: 'Failed to fetch net flow trend' });
+        }
+    },
+
+    async getCategorySpending(req, res) {
+        try {
+            const userId = req.user.id;
+            const { categoryId } = req.params;
+            const { startDate, endDate } = req.query;
+            const spending = await transactionService.getCategorySpending(userId, categoryId, { startDate, endDate });
+            res.status(200).json({ current_spending: spending });
+        } catch (error) {
+            console.error('Get category spending error:', error);
+            res.status(500).json({ error: 'Failed to fetch category spending' });
         }
     }
 };

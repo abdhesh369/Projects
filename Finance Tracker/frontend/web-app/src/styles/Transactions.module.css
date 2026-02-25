@@ -41,6 +41,47 @@
     gap: var(--space-sm);
 }
 
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0px;
+}
+
+.tabButton {
+    background: transparent;
+    border: none;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: color var(--transition-base);
+}
+
+.tabButton:hover {
+    color: var(--text-primary);
+}
+
+.tabButton.activeTab {
+    color: var(--primary);
+}
+
+.tabButton.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    /* cover the border-bottom of .tabs */
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 2px 2px 0 0;
+}
+
 /* Filters */
 .filtersCard {
     margin-bottom: var(--space-lg);

@@ -1,38 +1,57 @@
-const db = require('../config/db');
+const axios = require('axios');
+
+// Using localhost as we are in a single-machine dev environment.
+// In production, these would be service names or internal DNS.
+const TRANSACTION_SERVICE_URL = process.env.TRANSACTION_SERVICE_URL || 'http://localhost:3009';
+const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
 
 const reportGenerationService = {
     async generateSummary(userId, { startDate, endDate }) {
-        const query = `
-            SELECT 
-                COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
-                COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expenses,
-                COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) - SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as net_balance
-            FROM transactions
-            WHERE user_id = $1 AND date >= $2 AND date <= $3;
-        `;
-        const { rows } = await db.query(query, [userId, startDate, endDate]);
-        return rows[0];
+        try {
+            const response = await axios.get(`${TRANSACTION_SERVICE_URL}/summary`, {
+                params: { startDate, endDate },
+                headers: {
+                    'X-Internal-Token': INTERNAL_SERVICE_TOKEN,
+                    'X-User-Id': userId // Pass-through auth context
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('[Reporting] Summary fetch error:', error.message);
+            throw new Error('Failed to fetch reporting summary data');
+        }
     },
 
     async getCategoryBreakdown(userId, { startDate, endDate }) {
-        const query = `
-            SELECT 
-                c.name as category,
-                c.icon,
-                c.color,
-                COALESCE(SUM(t.amount), 0) as amount
-            FROM categories c
-            LEFT JOIN transactions t ON c.id = t.category_id 
-                AND t.user_id = $1 
-                AND t.date >= $2 
-                AND t.date <= $3
-            WHERE c.type = 'expense'
-            GROUP BY c.id, c.name, c.icon, c.color
-            HAVING SUM(t.amount) > 0
-            ORDER BY amount DESC;
-        `;
-        const { rows } = await db.query(query, [userId, startDate, endDate]);
-        return rows;
+        try {
+            const response = await axios.get(`${TRANSACTION_SERVICE_URL}/categories/breakdown`, {
+                params: { startDate, endDate },
+                headers: {
+                    'X-Internal-Token': INTERNAL_SERVICE_TOKEN,
+                    'X-User-Id': userId
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('[Reporting] Breakdown fetch error:', error.message);
+            throw new Error('Failed to fetch category breakdown data');
+        }
+    },
+
+    async getTransactions(userId, { startDate, endDate }) {
+        try {
+            const response = await axios.get(`${TRANSACTION_SERVICE_URL}`, {
+                params: { startDate, endDate, limit: 10000 },
+                headers: {
+                    'X-Internal-Token': INTERNAL_SERVICE_TOKEN,
+                    'X-User-Id': userId
+                }
+            });
+            return response.data.transactions || response.data;
+        } catch (error) {
+            console.error('[Reporting] Transactions fetch error:', error.message);
+            throw new Error('Failed to fetch transactions for export');
+        }
     }
 };
 

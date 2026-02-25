@@ -6,11 +6,10 @@ const oauthService = {
 
     async handleCallback(provider, code) {
         console.log(`[Auth] OAuth: Handling callback for ${provider} with code ${code}`);
-        return {
-            email: 'oauth_user@example.com',
-            providerId: 'OAUTH_ID_PLACEHOLDER',
-            provider
-        };
+
+        // SECURITY: Removed placeholder email.
+        // MUST implement real provider exchange (e.g. Google/GitHub API) here.
+        throw new Error(`OAuth exchange for ${provider} not implemented.`);
     }
 };
 

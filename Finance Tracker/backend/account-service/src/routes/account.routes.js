@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 router.post('/', accountController.createAccount);
 router.get('/', accountController.getAllAccounts);
+router.get('/total-balance', accountController.getTotalBalance);
 router.get('/:id', accountController.getAccountById);
 router.put('/:id', accountController.updateAccount);
 router.delete('/:id', accountController.deleteAccount);

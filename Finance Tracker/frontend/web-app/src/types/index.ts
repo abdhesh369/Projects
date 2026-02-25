@@ -199,3 +199,15 @@ export interface AuthResponse {
     user: User;
     token: string;
 }
+
+// ===== Notification Types =====
+export interface AppNotification {
+    id: string;
+    userId: string;
+    title: string;
+    message: string;
+    type: string;
+    is_read: boolean;
+    data?: any;
+    createdAt: string;
+}

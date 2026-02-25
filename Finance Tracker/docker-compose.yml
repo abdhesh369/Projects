@@ -38,9 +38,189 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - REDIS_HOST=redis
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
     depends_on:
       - postgres
       - redis
+    networks:
+      - ft-network
+
+  account-service:
+    build:
+      context: ./backend/account-service
+    container_name: ft-account-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  analytics-service:
+    build:
+      context: ./backend/analytics-service
+    container_name: ft-analytics-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  audit-service:
+    build:
+      context: ./backend/audit-service
+    container_name: ft-audit-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  banking-integration-service:
+    build:
+      context: ./backend/banking-integration-service
+    container_name: ft-banking-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  budget-service:
+    build:
+      context: ./backend/budget-service
+    container_name: ft-budget-service
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  notification-service:
+    build:
+      context: ./backend/notification-service
+    container_name: ft-notification-service
+    ports:
+      - "3007:3007"
+    environment:
+      - PORT=3007
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  reporting-service:
+    build:
+      context: ./backend/reporting-service
+    container_name: ft-reporting-service
+    ports:
+      - "3008:3008"
+    environment:
+      - PORT=3008
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  transaction-service:
+    build:
+      context: ./backend/transaction-service
+    container_name: ft-transaction-service
+    ports:
+      - "3009:3009"
+    environment:
+      - PORT=3009
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  user-service:
+    build:
+      context: ./backend/user-service
+    container_name: ft-user-service
+    ports:
+      - "3010:3010"
+    environment:
+      - PORT=3010
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+    depends_on:
+      - postgres
+    networks:
+      - ft-network
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    container_name: ft-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - ACCOUNTS_SERVICE_URL=http://account-service:3002
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3003
+      - AUDIT_SERVICE_URL=http://audit-service:3004
+      - BANKING_SERVICE_URL=http://banking-integration-service:3005
+      - BUDGET_SERVICE_URL=http://budget-service:3006
+      - NOTIFICATIONS_SERVICE_URL=http://notification-service:3007
+      - REPORTING_SERVICE_URL=http://reporting-service:3008
+      - TRANSACTIONS_SERVICE_URL=http://transaction-service:3009
+      - USERS_SERVICE_URL=http://user-service:3010
+    depends_on:
+      - auth-service
+      - account-service
+      - analytics-service
     networks:
       - ft-network
 

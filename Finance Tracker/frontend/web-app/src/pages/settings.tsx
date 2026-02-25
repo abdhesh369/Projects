@@ -10,11 +10,15 @@ import {
     ChevronRightIcon,
     SunIcon,
     MoonIcon,
+    ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import { Layout, Button, Card, Input } from '../components/common';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { userService } from '../services/userService';
+import { auditService, AuditLog } from '../services/auditService';
 import styles from '../styles/Settings.module.css';
+import { formatDistanceToNow, format } from 'date-fns';
 
 interface SettingsSection {
     id: string;
@@ -27,16 +31,17 @@ const sections: SettingsSection[] = [
     { id: 'profile', icon: UserCircleIcon, title: 'Profile', description: 'Manage your personal information' },
     { id: 'notifications', icon: BellIcon, title: 'Notifications', description: 'Configure notification preferences' },
     { id: 'security', icon: ShieldCheckIcon, title: 'Security', description: 'Password and authentication settings' },
+    { id: 'activity', icon: ClipboardDocumentListIcon, title: 'Activity Logs', description: 'View your recent account activity' },
     { id: 'billing', icon: CreditCardIcon, title: 'Billing', description: 'Manage subscription and payments' },
     { id: 'appearance', icon: PaintBrushIcon, title: 'Appearance', description: 'Customize the app theme' },
 ];
 
 export default function Settings() {
     const { user, logout } = useAuth();
+    const { theme, setTheme } = useTheme();
     const [activeSection, setActiveSection] = useState('profile');
     const [firstName, setFirstName] = useState(user?.firstName || '');
     const [lastName, setLastName] = useState(user?.lastName || '');
-    const [theme, setTheme] = useState<'dark' | 'light'>(user?.preferences?.theme || 'dark');
     const [notifications, setNotifications] = useState<Record<string, boolean>>(
         typeof user?.preferences?.notifications === 'object'
             ? user.preferences.notifications as Record<string, boolean>
@@ -48,14 +53,37 @@ export default function Settings() {
             }
     );
     const [isSaving, setIsSaving] = useState(false);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
     useEffect(() => {
         if (user) {
             setFirstName(user.firstName);
             setLastName(user.lastName);
-            setTheme(user.preferences?.theme || 'dark');
         }
     }, [user]);
+
+    useEffect(() => {
+        if (activeSection === 'activity') {
+            fetchAuditLogs();
+        }
+    }, [activeSection]);
+
+    const fetchAuditLogs = async () => {
+        setIsLoadingLogs(true);
+        try {
+            const logs = await auditService.getMyLogs();
+            if (Array.isArray(logs)) {
+                setAuditLogs(logs);
+            } else if (logs && typeof logs === 'object' && 'data' in logs) {
+                setAuditLogs((logs as any).data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch audit logs:', error);
+        } finally {
+            setIsLoadingLogs(false);
+        }
+    };
 
     const handleSaveProfile = async () => {
         setIsSaving(true);
@@ -72,10 +100,11 @@ export default function Settings() {
 
     const handleUpdateTheme = async (newTheme: 'dark' | 'light') => {
         try {
+            setTheme(newTheme); // Optimistic update
             await userService.updatePreferences({ theme: newTheme });
-            setTheme(newTheme);
         } catch (error) {
             console.error('Failed to update theme:', error);
+            // Revert on failure (simplified here)
         }
     };
 
@@ -175,6 +204,37 @@ export default function Settings() {
                                 <MoonIcon className={styles.themeIcon} />
                                 <span>Dark</span>
                             </button>
+                        </div>
+                    </div>
+                );
+
+            case 'activity':
+                return (
+                    <div className={styles.sectionContent}>
+                        <h2 className={styles.sectionTitle}>Activity Logs</h2>
+                        <p className={styles.sectionDescription}>View your recent security and account activity</p>
+
+                        <div className={styles.logList}>
+                            {isLoadingLogs ? (
+                                <p>Loading logs...</p>
+                            ) : auditLogs.length === 0 ? (
+                                <p>No recent activity found.</p>
+                            ) : (
+                                auditLogs.map(log => (
+                                    <div key={log.id} className={styles.logItem}>
+                                        <div className={styles.logHeader}>
+                                            <span className={styles.logAction}>{log.action.replace(/_/g, ' ')}</span>
+                                            <span className={styles.logTime}>
+                                                {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                                            </span>
+                                        </div>
+                                        <div className={styles.logDetails}>
+                                            <p>Resource: <span className={styles.logResource}>{log.resource}</span></p>
+                                            <p className={styles.logIp}>IP: {log.ipAddress}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 );

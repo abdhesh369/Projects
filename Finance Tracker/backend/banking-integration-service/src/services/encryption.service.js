@@ -1,6 +1,10 @@
 const crypto = require('crypto');
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-256-bit-secret-key-here-1234'; // Must be 32 bytes
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+if (!ENCRYPTION_KEY) {
+    console.error('FATAL: ENCRYPTION_KEY not configured');
+    process.exit(1);
+}
 const IV_LENGTH = 16;
 
 const encryptionService = {

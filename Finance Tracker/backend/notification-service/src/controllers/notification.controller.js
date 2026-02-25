@@ -31,6 +31,29 @@ const notificationController = {
             console.error('[Notification] Error sending notification:', error);
             res.status(500).json({ error: 'Failed to send notification' });
         }
+    },
+
+    async list(req, res) {
+        try {
+            const userId = req.user.id;
+            const notifications = await inAppService.getUserNotifications(userId);
+            res.status(200).json(notifications);
+        } catch (error) {
+            console.error('[Notification] Error listing notifications:', error);
+            res.status(500).json({ error: 'Failed to list notifications' });
+        }
+    },
+
+    async markRead(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            const notification = await inAppService.markAsRead(id, userId);
+            res.status(200).json(notification);
+        } catch (error) {
+            console.error('[Notification] Error marking notification as read:', error);
+            res.status(500).json({ error: 'Failed to mark notification as read' });
+        }
     }
 };
 

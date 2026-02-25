@@ -20,6 +20,30 @@ const transactionService = {
 
     async deleteTransaction(id, userId) {
         return await Transaction.delete(id, userId);
+    },
+
+    async getSummary(userId, filters) {
+        return await Transaction.getSummary(userId, filters);
+    },
+
+    async getCategoryBreakdown(userId, filters) {
+        return await Transaction.getCategoryBreakdown(userId, filters);
+    },
+
+    async getSpendingTrend(userId, filters) {
+        return await Transaction.getSpendingTrend(userId, filters);
+    },
+
+    async getIncomeVsExpenses(userId, filters) {
+        return await Transaction.getIncomeVsExpenses(userId, filters);
+    },
+
+    async getNetFlowTrend(userId) {
+        return await Transaction.getNetFlowTrend(userId);
+    },
+
+    async getCategorySpending(userId, categoryId, filters) {
+        return await Transaction.getCategorySpending(userId, categoryId, filters);
     }
 };
 

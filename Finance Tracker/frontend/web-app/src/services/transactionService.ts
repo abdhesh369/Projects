@@ -1,5 +1,5 @@
 import api from './api';
-import { Transaction } from '../types';
+import { Transaction, PaginatedResponse } from '../types';
 
 export const transactionService = {
     getRecentTransactions: async (limit: number = 5): Promise<Transaction[]> => {
@@ -16,7 +16,22 @@ export const transactionService = {
     },
 
     getTransactions: async (): Promise<Transaction[]> => {
-        const response = await api.get<Transaction[]>('/transactions');
-        return response.data;
+        try {
+            const response = await api.get<PaginatedResponse<Transaction>>('/transactions');
+            return response.data.items || [];
+        } catch (error) {
+            console.error('Failed to fetch transactions:', error);
+            return [];
+        }
+    },
+
+    getRecurringTransactions: async (): Promise<Transaction[]> => {
+        try {
+            const response = await api.get<{ success: boolean; data: Transaction[] }>('/transactions/recurring');
+            return response.data.data || [];
+        } catch (error) {
+            console.error('Failed to fetch recurring transactions:', error);
+            return [];
+        }
     },
 };

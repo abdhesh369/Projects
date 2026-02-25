@@ -8,13 +8,35 @@ import {
 } from '@heroicons/react/24/outline';
 import { Layout, Button, Input, Card } from '../components/common';
 import { TransactionTable } from '../components/transactions/TransactionTable';
+import { RecurringTransactionTable } from '../components/transactions/RecurringTransactionTable';
 import { TransactionModal } from '../components/transactions/TransactionModal';
+import { exportService } from '../services/exportService';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import styles from '../styles/Transactions.module.css';
 
 export default function Transactions() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'recurring'>('all');
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async (exportFormat: 'csv' | 'pdf') => {
+        setIsExporting(true);
+        try {
+            // For simplicity, exporting the current month.
+            // In a fuller implementation, this would match active filters/date range.
+            const today = new Date();
+            const startStr = format(startOfMonth(today), 'yyyy-MM-dd');
+            const endStr = format(endOfMonth(today), 'yyyy-MM-dd');
+
+            await exportService.exportTransactions(exportFormat, startStr, endStr);
+        } catch (error) {
+            alert('Failed to export transactions.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <>
@@ -35,8 +57,18 @@ export default function Transactions() {
                             <Button
                                 variant="secondary"
                                 leftIcon={<ArrowDownTrayIcon />}
+                                onClick={() => handleExport('csv')}
+                                disabled={isExporting}
                             >
-                                Export
+                                CSV
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                leftIcon={<ArrowDownTrayIcon />}
+                                onClick={() => handleExport('pdf')}
+                                disabled={isExporting}
+                            >
+                                PDF
                             </Button>
                             <Button
                                 variant="primary"
@@ -46,6 +78,22 @@ export default function Transactions() {
                                 Add Transaction
                             </Button>
                         </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className={styles.tabs}>
+                        <button
+                            className={`${styles.tabButton} ${activeTab === 'all' ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab('all')}
+                        >
+                            Log
+                        </button>
+                        <button
+                            className={`${styles.tabButton} ${activeTab === 'recurring' ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab('recurring')}
+                        >
+                            Recurring Subscriptions
+                        </button>
                     </div>
 
                     {/* Filters */}
@@ -91,7 +139,11 @@ export default function Transactions() {
 
                     {/* Transaction Table */}
                     <Card className={styles.tableCard} padding="none" hover={false}>
-                        <TransactionTable searchQuery={searchQuery} typeFilter={selectedType} />
+                        {activeTab === 'all' ? (
+                            <TransactionTable searchQuery={searchQuery} typeFilter={selectedType} />
+                        ) : (
+                            <RecurringTransactionTable searchQuery={searchQuery} />
+                        )}
                     </Card>
                 </div>
 

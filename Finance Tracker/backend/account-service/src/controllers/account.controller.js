@@ -90,6 +90,17 @@ const accountController = {
             console.error('Delete account error:', error);
             res.status(500).json({ error: 'Failed to delete account' });
         }
+    },
+
+    async getTotalBalance(req, res) {
+        try {
+            const userId = req.user.id;
+            const result = await Account.getTotalBalance(userId);
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Get total balance error:', error);
+            res.status(500).json({ error: 'Failed to fetch total balance' });
+        }
     }
 };
 
