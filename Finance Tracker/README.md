@@ -124,9 +124,45 @@ The backend is built around a highly scalable microservices architecture utilizi
 5. **Access the application:**
    Open your browser and navigate to `http://localhost:3000` to begin using the Finance Tracker.
 
-## Deployment Using Docker (Optional)
+## Testing
 
-For a simplified setup experience tailored to development, you can use the provided Docker Compose configuration to spin up the entire application stack, including the PostgreSQL database.
+### Backend Tests
+Each service has its own Jest test suite. To run tests for a specific service:
+```bash
+cd backend/<service-name>
+npm test
+```
+
+### Frontend Tests
+Unit tests for components are located in `src/components/**/__tests__`.
+```bash
+cd frontend/web-app
+npm test
+```
+
+### End-to-End Tests
+E2E tests use Playwright and are located in the `e2e` directory.
+```bash
+# Ensure the app is running first!
+npx playwright test
+```
+
+## Production Infrastructure
+
+### CI/CD
+Automated testing and Docker builds are handled by GitHub Actions (see `.github/workflows/pipeline.yml`).
+
+### Infrastructure as Code
+- **Terraform**: Located in `infrastructure/terraform`. Used to provision AWS EKS, RDS, and ElastiCache.
+- **Kubernetes**: Manifests for deployments, services, and ingress are in `infrastructure/k8s`.
+
+### Observability
+Detailed strategies for monitoring, logging, and error tracking can be found in `docs/observability-guide.md`.
+
+### API Documentation
+The OpenAPI 3.0 specification is available at `docs/openapi.json`.
+
+## Deployment Using Docker (Local)
 
 ```bash
 docker-compose up --build

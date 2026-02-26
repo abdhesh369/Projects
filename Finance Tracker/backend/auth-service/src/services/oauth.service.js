@@ -7,13 +7,12 @@ const oauthService = {
             const clientId = process.env.GOOGLE_CLIENT_ID;
             const redirectUri = process.env.GOOGLE_REDIRECT_URI;
             if (!clientId || !redirectUri) {
-                console.warn('[Auth] GOOGLE_CLIENT_ID missing. Simulating URL.');
-                return 'https://accounts.google.com/o/oauth2/v2/auth?client_id=simulated';
+                throw new Error('Google OAuth credentials (CLIENT_ID/REDIRECT_URI) not configured');
             }
             return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile`;
         }
         logger.info(`[Auth] OAuth: Getting auth URL for ${provider}`);
-        return `https://${provider}.com/oauth/authorize?client_id=...`;
+        throw new Error(`OAuth URL generation for ${provider} not implemented.`);
     },
 
     async handleCallback(provider, code) {
@@ -25,13 +24,7 @@ const oauthService = {
             const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
             if (!clientId || !clientSecret || !redirectUri) {
-                console.warn('[Auth] Google OAuth credentials missing. Simulating exchange.');
-                return {
-                    email: `simulated_user_${code}@example.com`,
-                    firstName: 'Simulated',
-                    lastName: 'User',
-                    providerId: `simulated_${code}`
-                };
+                throw new Error('Google OAuth credentials (CLIENT_ID/SECRET/URI) not configured');
             }
 
             try {

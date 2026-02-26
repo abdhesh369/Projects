@@ -9,6 +9,7 @@ router.post('/', goalController.create);
 router.get('/', goalController.list);
 router.get('/:id', goalController.get);
 router.put('/:id', goalController.update);
+router.post('/:id/contribute', goalController.contribute);
 router.delete('/:id', goalController.delete);
 
 module.exports = router;

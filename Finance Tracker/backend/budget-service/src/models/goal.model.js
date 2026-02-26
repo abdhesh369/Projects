@@ -42,8 +42,24 @@ const Goal = {
     },
 
     async delete(id, userId) {
-        const query = 'UPDATE goals SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2 RETURNING *';
+        const query = 'UPDATE goals SET status = \'cancelled\', is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2 RETURNING *';
         const { rows } = await db.query(query, [id, userId]);
+        return rows[0];
+    },
+
+    async updateProgress(id, userId, amount) {
+        const query = `
+            UPDATE goals 
+            SET current_amount = current_amount + $1, 
+                status = CASE 
+                    WHEN current_amount + $1 >= target_amount THEN 'completed' 
+                    ELSE status 
+                END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 AND user_id = $3
+            RETURNING *;
+        `;
+        const { rows } = await db.query(query, [amount, id, userId]);
         return rows[0];
     }
 };

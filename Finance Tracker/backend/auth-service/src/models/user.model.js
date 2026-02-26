@@ -24,8 +24,14 @@ const User = {
         return rows[0];
     },
 
-    async update(id, updates) {
-        const fields = Object.keys(updates);
+    async update(id, updates, allowedFields = null) {
+        let fields = Object.keys(updates);
+
+        // If an allowlist is provided, filter the updates
+        if (allowedFields) {
+            fields = fields.filter(field => allowedFields.includes(field));
+        }
+
         if (fields.length === 0) return null;
 
         const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');

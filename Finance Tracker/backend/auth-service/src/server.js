@@ -40,6 +40,10 @@ const authRoutes = require('./routes/auth.routes');
 app.use('/', authRoutes);
 
 // Start Server
-app.listen(PORT, () => {
-  logger.info(`Auth Service running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    logger.info(`Auth Service running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

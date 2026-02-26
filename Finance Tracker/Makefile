@@ -22,3 +22,14 @@ start:
 	@echo "Starting standard setup..."
 	make install
 	make start-backend & make start-frontend
+
+# Clean up build artifacts and dependencies
+clean:
+	@echo "Cleaning up..."
+	rm -rf node_modules
+	find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
+	find . -name "dist" -type d -prune -exec rm -rf '{}' +
+	find . -name "build" -type d -prune -exec rm -rf '{}' +
+	find . -name ".next" -type d -prune -exec rm -rf '{}' +
+	find . -name "coverage" -type d -prune -exec rm -rf '{}' +
+	rm -f *.log *.txt

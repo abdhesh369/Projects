@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { EnvelopeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Button, Input, Card } from '../components/common';
+import api from '../services/api';
 import styles from '../styles/Auth.module.css';
 
 const forgotPasswordSchema = z.object({
@@ -26,10 +27,14 @@ export default function ForgotPassword() {
     });
 
     const onSubmit = async (data: ForgotPasswordData) => {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log('Reset password for:', data.email);
-        setIsSent(true);
+        try {
+            await api.post('/api/auth/forgot-password', { email: data.email });
+            setIsSent(true);
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            // Even on error (like 404), we show the success message to prevent email enumeration
+            setIsSent(true);
+        }
     };
 
     return (

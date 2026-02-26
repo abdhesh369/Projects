@@ -303,6 +303,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
       - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
@@ -334,7 +335,6 @@ services:
       - REPORTING_SERVICE_URL=http://reporting-service:3008
       - TRANSACTIONS_SERVICE_URL=http://transaction-service:3009
       - USERS_SERVICE_URL=http://user-service:3010
-      - GOALS_SERVICE_URL=http://goals-service:3011
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
       - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
@@ -344,33 +344,6 @@ services:
         condition: service_healthy
       analytics-service:
         condition: service_healthy
-      goals-service:
-        condition: service_healthy
-    networks:
-      - ft-network
-
-  goals-service:
-    build:
-      context: ./backend/goals-service
-    container_name: ft-goals-service
-    ports:
-      - "127.0.0.1:3011:3011"
-    environment:
-      - PORT=3011
-      - DB_HOST=postgres
-      - DB_USER=${DB_USER:-admin}
-      - DB_PASSWORD=${DB_PASSWORD:-password}
-      - DB_NAME=${DB_NAME:-finance_tracker}
-      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
-      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3011/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - ft-network
 

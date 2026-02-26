@@ -1,5 +1,6 @@
 const logger = require('../../shared/utils/logger');
 require('dotenv').config();
+const reportWorker = require('./workers/report.worker');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -29,4 +30,5 @@ app.use('/', reportRoutes);
 
 app.listen(PORT, () => {
     logger.info(`Reporting Service running on port ${PORT}`);
+    reportWorker.start();
 });

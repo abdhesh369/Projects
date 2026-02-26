@@ -1,12 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const billingController = require('../controllers/billing.controller');
+const userController = require('../controllers/user.controller');
+const authMiddleware = require('../middleware/auth');
+const { validate } = require('../../../shared/utils/request-validator');
 
-router.use(authMiddleware);
+const updateProfileSchema = {
+    firstName: { type: 'string', required: true, minLength: 2 },
+    lastName: { type: 'string', required: true, minLength: 2 }
+};
 
-router.get('/me', userController.getMe);
-router.put('/profile', userController.updateProfile);
-router.put('/preferences', userController.updatePreferences);
+const updatePreferencesSchema = {
+    currency: { type: 'string' },
+    theme: { type: 'string' },
+    notifications: { type: 'object' }
+};
+
+// Basic info
+router.get('/me', authMiddleware, userController.getMe);
+router.put('/profile', authMiddleware, validate(updateProfileSchema), userController.updateProfile);
+router.put('/preferences', authMiddleware, validate(updatePreferencesSchema), userController.updatePreferences);
 
 // Subscription routes (Fixed Routing)
 router.get('/subscription', billingController.getSubscriptions);

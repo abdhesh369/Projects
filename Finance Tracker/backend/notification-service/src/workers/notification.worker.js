@@ -1,10 +1,10 @@
-const logger = require('../../../shared/utils/logger');
-const db = require('../config/db'); // Assuming db config is available
+const emailService = require('../services/email.service');
+const smsService = require('../services/sms.service');
 
 const notificationWorker = {
     async processQueue() {
         try {
-            // Fetch pending notifications from a hypothetical queue table
+            // Fetch pending notifications from the queue table
             const query = 'SELECT * FROM notification_queue WHERE status = $1 LIMIT 10';
             const { rows: pendingNotifications } = await db.query(query, ['pending']);
 
@@ -19,7 +19,7 @@ const notificationWorker = {
                         result = await this.sendSMS(notification.recipient, notification.content);
                     }
 
-                    if (result.success) {
+                    if (result && result.success) {
                         await db.query('UPDATE notification_queue SET status = $1, processed_at = NOW() WHERE id = $2', ['sent', notification.id]);
                     }
                 } catch (err) {
@@ -33,13 +33,18 @@ const notificationWorker = {
     },
 
     async sendEmail(to, subject, body) {
-        logger.info(`[SMTP] Sending email to: ${to}`);
-        return { success: true };
+        return await emailService.sendEmail({
+            to,
+            subject,
+            text: body
+        });
     },
 
     async sendSMS(to, message) {
-        logger.info(`[Twilio] Sending SMS to: ${to}`);
-        return { success: true };
+        return await smsService.sendSms({
+            to,
+            message
+        });
     }
 };
 

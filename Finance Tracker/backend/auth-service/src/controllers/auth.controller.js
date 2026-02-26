@@ -258,7 +258,7 @@ const authController = {
                 return res.status(400).json({ error: 'Invalid MFA code' });
             }
 
-            await User.update(userId, { mfa_enabled: true, mfa_secret: secret });
+            await User.update(userId, { mfa_enabled: true, mfa_secret: secret }, ['mfa_enabled', 'mfa_secret']);
             await mfaService.clearPendingSecret(userId);
 
             // AUDIT: Log MFA enablement (M-04)
@@ -301,7 +301,7 @@ const authController = {
                 return res.status(400).json({ error: 'MFA code or password required' });
             }
 
-            await User.update(userId, { mfa_enabled: false, mfa_secret: null });
+            await User.update(userId, { mfa_enabled: false, mfa_secret: null }, ['mfa_enabled', 'mfa_secret']);
 
             // AUDIT: Log MFA disablement (M-04)
             await auditLogger.log({
@@ -367,7 +367,7 @@ const authController = {
             }
 
             const passwordHash = await authenticationService.hashPassword(newPassword);
-            await User.update(userId, { password_hash: passwordHash });
+            await User.update(userId, { password_hash: passwordHash }, ['password_hash']);
 
             await redis.del(`pwdreset:${tokenHash}`);
             await Session.deleteAllByUserId(userId);

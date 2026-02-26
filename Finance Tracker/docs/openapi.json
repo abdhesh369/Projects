@@ -1,0 +1,42 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Finance Tracker API",
+        "version": "1.0.0",
+        "description": "API documentation for the Finance Tracker microservices architecture."
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3010",
+            "description": "API Gateway"
+        }
+    ],
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "summary": "User Login",
+                "tags": [
+                    "Auth"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully authenticated"
+                    }
+                }
+            }
+        },
+        "/transactions": {
+            "get": {
+                "summary": "Get all transactions",
+                "tags": [
+                    "Transactions"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of transactions"
+                    }
+                }
+            }
+        }
+    }
+}

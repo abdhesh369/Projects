@@ -106,3 +106,41 @@ public
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# IDEs and Editors
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Backend / Node build artifacts
+dist/
+/build
+!/build/Release
+/out
+
+# Misc
+.ssh/
+*.db
+*.sqlite
+.DS_Store

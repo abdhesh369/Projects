@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS users (
     last_name VARCHAR(100) NOT NULL,
     avatar VARCHAR(500),
     preferences JSONB DEFAULT '{"currency": "USD", "theme": "light", "notifications": true}'::jsonb,
+    role VARCHAR(50) DEFAULT 'user',
+    mfa_enabled BOOLEAN DEFAULT FALSE,
+    mfa_secret VARCHAR(255),
+    subscription_plan VARCHAR(50) DEFAULT 'free',
+    subscription_status VARCHAR(50) DEFAULT 'inactive',
+    stripe_customer_id VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
     email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -202,6 +208,61 @@ CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 
 -- ============================================
+-- USER SESSIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    service VARCHAR(50) NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_active_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX idx_user_sessions_expires_at ON user_sessions(expires_at);
+
+-- ============================================
+-- NOTIFICATION QUEUE TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS notification_queue (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    payload JSONB NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+    attempts INT DEFAULT 0,
+    max_attempts INT DEFAULT 3,
+    error_message TEXT,
+    scheduled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_notification_queue_scheduled_at ON notification_queue(scheduled_at);
+
+-- ============================================
+-- REPORT SCHEDULES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS report_schedules (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    frequency VARCHAR(20) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
+    format VARCHAR(10) NOT NULL CHECK (format IN ('pdf', 'csv')),
+    email VARCHAR(255) NOT NULL,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'paused')),
+    next_run_at TIMESTAMP WITH TIME ZONE,
+    last_run_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_report_schedules_user_id ON report_schedules(user_id);
+CREATE INDEX idx_report_schedules_next_run_at ON report_schedules(next_run_at) WHERE status = 'active';
+
+-- ============================================
 -- INSERT DEFAULT CATEGORIES
 -- ============================================
 INSERT INTO categories (id, name, icon, color, type, is_default) VALUES
@@ -250,6 +311,7 @@ CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions FOR 
 CREATE TRIGGER update_budgets_updated_at BEFORE UPDATE ON budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_goals_updated_at BEFORE UPDATE ON goals FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_recurring_transactions_updated_at BEFORE UPDATE ON recurring_transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_report_schedules_updated_at BEFORE UPDATE ON report_schedules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
 -- TRIGGER: Update account balance on transaction

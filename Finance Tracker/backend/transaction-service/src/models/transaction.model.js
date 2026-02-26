@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const categorizationService = require('../services/categorization.service');
 
 const Transaction = {
     async create({ userId, accountId, categoryId, amount, currency, type, description, date, notes, isRecurring }) {
@@ -207,14 +208,71 @@ const Transaction = {
         try {
             await client.query('BEGIN');
 
+            // 1. Fetch potential manual matches (no plaid_transaction_id)
+            const manualQuery = `
+                SELECT id, amount, description, date, category_id 
+                FROM transactions 
+                WHERE user_id = $1 AND plaid_transaction_id IS NULL 
+                AND date >= (CURRENT_DATE - INTERVAL '30 days')
+            `;
+            const { rows: manualTxns } = await client.query(manualQuery, [userId]);
+
             if (added && added.length > 0) {
                 for (const txn of added) {
+                    // Try to find a manual match
+                    const existingManual = manualTxns.find(m => {
+                        const sameAmount = Math.abs(parseFloat(txn.amount) - parseFloat(m.amount)) < 0.01;
+                        const tDate = new Date(txn.date);
+                        const mDate = new Date(m.date);
+                        const diffDays = Math.abs(tDate - mDate) / (1000 * 60 * 60 * 24);
+                        const nearDate = diffDays <= 2;
+
+                        const tDesc = (txn.merchant_name || txn.name || '').toLowerCase();
+                        const mDesc = (m.description || '').toLowerCase();
+                        const similarDesc = tDesc.includes(mDesc) || mDesc.includes(tDesc);
+
+                        return sameAmount && nearDate && similarDesc;
+                    });
+
+                    if (existingManual) {
+                        // LINK: Update the manual entry instead of inserting
+                        const linkQuery = `
+                            UPDATE transactions 
+                            SET plaid_transaction_id = $1, 
+                                pending = $2,
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = $3;
+                        `;
+                        await client.query(linkQuery, [txn.plaid_transaction_id, txn.pending || false, existingManual.id]);
+
+                        // Remove from manualTxns to avoid double-linking
+                        const idx = manualTxns.indexOf(existingManual);
+                        if (idx > -1) manualTxns.splice(idx, 1);
+                        continue;
+                    }
+
+                    // 2. AUTO-CATEGORIZATION
+                    let categoryId = null;
+                    const categoryName = categorizationService.categorize(txn.merchant_name || txn.name || txn.description);
+                    if (categoryName) {
+                        const catQuery = `
+                            SELECT id FROM categories 
+                            WHERE (user_id = $1 OR user_id IS NULL) AND LOWER(name) = LOWER($2)
+                            LIMIT 1
+                        `;
+                        const { rows: catRows } = await client.query(catQuery, [userId, categoryName]);
+                        if (catRows.length > 0) {
+                            categoryId = catRows[0].id;
+                        }
+                    }
+
+                    // 3. Insert new transaction
                     const query = `
                         INSERT INTO transactions (
                             user_id, account_id, amount, type, description, 
-                            date, plaid_transaction_id, pending
+                            date, plaid_transaction_id, pending, currency, category_id
                         )
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                         ON CONFLICT (plaid_transaction_id) 
                         DO UPDATE SET 
                             amount = EXCLUDED.amount,
@@ -226,7 +284,10 @@ const Transaction = {
                     `;
                     await client.query(query, [
                         userId, txn.account_id, txn.amount, txn.type || 'expense',
-                        txn.name || txn.description, txn.date, txn.plaid_transaction_id, txn.pending || false
+                        txn.merchant_name || txn.name || txn.description, txn.date,
+                        txn.plaid_transaction_id, txn.pending || false,
+                        txn.currency || 'USD',
+                        categoryId
                     ]);
                 }
             }
@@ -238,7 +299,7 @@ const Transaction = {
                         SET amount = $1, description = $2, pending = $3, updated_at = CURRENT_TIMESTAMP
                         WHERE plaid_transaction_id = $4 AND user_id = $5;
                     `;
-                    await client.query(query, [txn.amount, txn.name || txn.description, txn.pending, txn.plaid_transaction_id, userId]);
+                    await client.query(query, [txn.amount, txn.merchant_name || txn.name || txn.description, txn.pending, txn.plaid_transaction_id, userId]);
                 }
             }
 

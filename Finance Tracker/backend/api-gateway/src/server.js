@@ -6,6 +6,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const authMiddleware = require('./middleware/auth.middleware');
 const loggingMiddleware = require('./middleware/logging.middleware');
 const validateRequest = require('./middleware/validation');
+const csrfProtection = require('./middleware/csrf.middleware');
 const axios = require('axios');
 
 const helmet = require('helmet');
@@ -48,8 +49,7 @@ app.get('/health/all', async (req, res) => {
         notifications: process.env.NOTIFICATIONS_SERVICE_URL || 'http://localhost:3007',
         reporting: process.env.REPORTING_SERVICE_URL || 'http://localhost:3008',
         transactions: process.env.TRANSACTIONS_SERVICE_URL || 'http://localhost:3009',
-        users: process.env.USERS_SERVICE_URL || 'http://localhost:3010',
-        goals: process.env.GOALS_SERVICE_URL || 'http://localhost:3011'
+        users: process.env.USERS_SERVICE_URL || 'http://localhost:3010'
     };
 
     const results = {};
@@ -69,6 +69,7 @@ app.get('/health/all', async (req, res) => {
 
 // Auth Middleware (applied before proxies)
 app.use(authMiddleware);
+app.use(csrfProtection);
 app.use(validateRequest);
 
 // Service routes with Proxy
@@ -109,7 +110,23 @@ app.use('/api/users', rateLimit, createServiceProxy(process.env.USERS_SERVICE_UR
 app.use('/api/audit', rateLimit, createServiceProxy(process.env.AUDIT_SERVICE_URL || 'http://localhost:3004'));
 app.use('/api/banking', rateLimit, createServiceProxy(process.env.BANKING_SERVICE_URL || 'http://localhost:3005'));
 app.use('/api/budget', rateLimit, createServiceProxy(process.env.BUDGET_SERVICE_URL || 'http://localhost:3006'));
-app.use('/api/goals', rateLimit, createServiceProxy(process.env.GOALS_SERVICE_URL || 'http://localhost:3011'));
+app.use('/api/goals', rateLimit, createProxyMiddleware({
+    target: process.env.BUDGET_SERVICE_URL || 'http://localhost:3006',
+    changeOrigin: true,
+    pathRewrite: (path) => path.replace(/^\/api\/goals/, '/goals') || '/goals',
+    onProxyReq: (proxyReq, req, res) => {
+        proxyReq.setHeader('X-Internal-Token', process.env.INTERNAL_SERVICE_TOKEN);
+        if (req.user) {
+            proxyReq.setHeader('X-User-Id', req.user.id);
+            if (req.user.email) proxyReq.setHeader('X-User-Email', req.user.email);
+            if (req.user.role) proxyReq.setHeader('X-User-Role', req.user.role);
+        }
+    },
+    onError: (err, req, res) => {
+        logger.error('Proxy Error (Goals):', err);
+        res.status(502).json({ error: 'Service Unavailable' });
+    }
+}));
 app.use('/api/notifications', rateLimit, createServiceProxy(process.env.NOTIFICATIONS_SERVICE_URL || 'http://localhost:3007'));
 app.use('/api/reporting', rateLimit, createServiceProxy(process.env.REPORTING_SERVICE_URL || 'http://localhost:3008'));
 app.use('/api/transactions', rateLimit, createServiceProxy(process.env.TRANSACTIONS_SERVICE_URL || 'http://localhost:3009'));
@@ -130,6 +147,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-    logger.info(`API Gateway running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        logger.info(`API Gateway running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
