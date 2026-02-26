@@ -43,7 +43,6 @@ const transactionController = {
                 type: req.query.type
             };
 
-            // Fix Issue #13: Add pagination metadata
             const { transactions, total } = await transactionService.getTransactions(userId, filters);
 
             res.status(200).json({
@@ -57,6 +56,18 @@ const transactionController = {
         } catch (error) {
             logger.error('List transactions error:', error);
             res.status(500).json({ error: 'Failed to fetch transactions' });
+        }
+    },
+
+    async getRecent(req, res) {
+        try {
+            const userId = req.user.id;
+            const limit = parseInt(req.query.limit) || 10;
+            const transactions = await transactionService.getRecentTransactions(userId, limit);
+            res.status(200).json(transactions);
+        } catch (error) {
+            logger.error('Get recent transactions error:', error);
+            res.status(500).json({ error: 'Failed to fetch recent transactions' });
         }
     },
 
@@ -192,9 +203,6 @@ const transactionController = {
     async sync(req, res) {
         try {
             const { userId, added, modified, removed } = req.body;
-            // Note: In a real scenario, we should verify the request comes from the banking-service
-            // or ensure req.user.id matches userId if it's a user-triggered sync.
-            // But banking-service passes userId explicitly for internal syncs.
             await transactionService.sync(userId, { added, modified, removed });
             res.status(200).json({ success: true });
         } catch (error) {

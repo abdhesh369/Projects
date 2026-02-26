@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-admin}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,7 +28,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,13 +53,14 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -78,11 +79,13 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -101,11 +104,14 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
+      - TRANSACTION_SERVICE_URL=http://transaction-service:3009
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -124,11 +130,13 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -150,11 +158,15 @@ services:
       - PLAID_CLIENT_ID=${PLAID_CLIENT_ID}
       - PLAID_SECRET=${PLAID_SECRET}
       - PLAID_ENV=${PLAID_ENV}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
+      - TRANSACTION_SERVICE_URL=http://transaction-service:3009
+      - ACCOUNT_SERVICE_URL=http://account-service:3002
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3005/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -173,11 +185,16 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
+      - TRANSACTION_SERVICE_URL=http://transaction-service:3009
+      - ACCOUNT_SERVICE_URL=http://account-service:3002
+      - USER_SERVICE_URL=http://user-service:3010
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3006/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3006/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -206,11 +223,14 @@ services:
       - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
       - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
       - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
+      - USER_SERVICE_URL=http://user-service:3010
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3007/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3007/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -229,11 +249,16 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
+      - TRANSACTION_SERVICE_URL=http://transaction-service:3009
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3003
+      - ACCOUNT_SERVICE_URL=http://account-service:3002
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3008/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3008/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -252,11 +277,13 @@ services:
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3009/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3009/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -276,11 +303,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
       - DB_NAME=${DB_NAME:-finance_tracker}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3010/health"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3010/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -305,6 +334,9 @@ services:
       - REPORTING_SERVICE_URL=http://reporting-service:3008
       - TRANSACTIONS_SERVICE_URL=http://transaction-service:3009
       - USERS_SERVICE_URL=http://user-service:3010
+      - GOALS_SERVICE_URL=http://goals-service:3011
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
     depends_on:
       auth-service:
         condition: service_healthy
@@ -312,6 +344,33 @@ services:
         condition: service_healthy
       analytics-service:
         condition: service_healthy
+      goals-service:
+        condition: service_healthy
+    networks:
+      - ft-network
+
+  goals-service:
+    build:
+      context: ./backend/goals-service
+    container_name: ft-goals-service
+    ports:
+      - "127.0.0.1:3011:3011"
+    environment:
+      - PORT=3011
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_NAME=${DB_NAME:-finance_tracker}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:-your_internal_token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3011/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ft-network
 

@@ -13,8 +13,7 @@ export const authService = {
   },
 
   logout: async (): Promise<void> => {
-    // Basic logout is handled by removing the token in AuthContext/Interceptors
-    return Promise.resolve();
+    await api.post('/api/auth/logout');
   },
 
   getCurrentUser: async (): Promise<User | null> => {

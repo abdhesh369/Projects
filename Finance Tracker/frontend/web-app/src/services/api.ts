@@ -4,35 +4,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
     baseURL: API_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Add a request interceptor to attach the JWT token
-api.interceptors.request.use(
-    (config) => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Add a response interceptor for error handling
+// Response interceptor to handle 401 Unauthorized
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
-            // Handle unauthorized access (e.g., redirect to login)
+        if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('token');
+                // Redirecting to login as cookies might be invalid/expired
                 window.location.href = '/login';
             }
         }

@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const budgetRoutes = require('./routes/budget.routes');
+const goalRoutes = require('./routes/goal.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/', budgetRoutes);
+app.use('/goals', goalRoutes);
 
 app.listen(PORT, () => {
     logger.info(`Budget Service running on port ${PORT}`);

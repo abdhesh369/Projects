@@ -13,33 +13,41 @@ const forecastingService = {
      */
     async predictNextMonthSpending(userId) {
         try {
-            // Fetch last 6 months of trend data to have enough context
+            // Fetch last 6 months of trend data
             const trend = await transactionClient.getSpendingTrend(userId, 6);
 
-            if (!trend || trend.length < 3) {
+            if (!trend || trend.length === 0) {
                 return {
                     forecastedAmount: 0,
                     confidence: 'low',
-                    message: 'Not enough historical data to generate a forecast'
+                    message: 'No transaction history found to generate a forecast.'
                 };
             }
 
-            // Get last 3 months
-            const lastThree = trend.slice(-3);
-            const sum = lastThree.reduce((acc, curr) => acc + parseFloat(curr.value), 0);
-            const average = sum / 3;
+            // Filter out months with zero spending if we have enough data
+            const validMonths = trend.filter(m => parseFloat(m.value) > 0);
 
-            // Simple trend detection (up, down, stable)
-            let confidence = 'medium';
-            if (trend.length >= 5) {
-                confidence = 'high';
+            if (validMonths.length < 2) {
+                return {
+                    forecastedAmount: validMonths.length === 1 ? parseFloat(validMonths[0].value) : 0,
+                    confidence: 'low',
+                    message: 'Limited transaction history. Forecast might be inaccurate.'
+                };
             }
+
+            // Get last 3 valid months for the moving average
+            const lastThree = validMonths.slice(-3);
+            const sum = lastThree.reduce((acc, curr) => acc + parseFloat(curr.value), 0);
+            const average = sum / lastThree.length;
+
+            // Confidence based on amount of data points
+            const confidence = validMonths.length >= 4 ? 'high' : 'medium';
 
             return {
                 forecastedAmount: Math.round(average * 100) / 100,
                 confidence,
                 basedOnMonths: lastThree.map(m => m.month),
-                nextMonth: this._getNextMonth(lastThree[lastThree.length - 1].month)
+                nextMonth: this._getNextMonth(trend[trend.length - 1].month)
             };
         } catch (error) {
             logger.error('Forecasting calculation error:', error);
@@ -48,6 +56,10 @@ const forecastingService = {
     },
 
     _getNextMonth(yearMonth) {
+        if (!yearMonth) {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        }
         const [year, month] = yearMonth.split('-').map(Number);
         let nextMonth = month + 1;
         let nextYear = year;

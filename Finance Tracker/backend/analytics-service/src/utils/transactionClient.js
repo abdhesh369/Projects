@@ -21,7 +21,6 @@ module.exports = {
                 params: { limit },
                 headers: { 'x-user-id': userId }
             });
-            // Transaction service standardized format is { data, pagination }
             return response.data.data;
         } catch (error) {
             logger.error('Error fetching transactions from analytics-service:', error.message);
@@ -32,6 +31,19 @@ module.exports = {
     /**
      * Fetch spending trend for a user
      */
+    async getSpendingTrend(userId, limit = 6) {
+        try {
+            const response = await transactionClient.get('/trends/spending', {
+                params: { limit },
+                headers: { 'x-user-id': userId }
+            });
+            return response.data;
+        } catch (error) {
+            logger.error('Error fetching spending trend from analytics-service:', error.message);
+            throw new Error('Failed to fetch spending trend data');
+        }
+    },
+
     /**
      * Fetch category breakdown for a user
      */

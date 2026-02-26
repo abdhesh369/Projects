@@ -144,6 +144,22 @@ export interface CategoryBreakdown {
     color: string;
 }
 
+// ===== Analytics Types =====
+export interface Insight {
+    type: 'success' | 'warning' | 'info';
+    category?: string;
+    message: string;
+    suggestion?: string;
+}
+
+export interface Forecast {
+    forecastedAmount: number;
+    confidence: 'high' | 'medium' | 'low';
+    message?: string;
+    basedOnMonths?: string[];
+    nextMonth?: string;
+}
+
 // ===== Form Types =====
 export interface TransactionFormData {
     accountId: string;

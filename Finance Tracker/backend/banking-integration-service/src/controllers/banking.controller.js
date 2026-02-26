@@ -1,4 +1,5 @@
 const logger = require('../../../shared/utils/logger');
+const auditLogger = require('../../../shared/utils/audit-logger');
 const connectionService = require('../services/connection.service');
 const encryptionService = require('../services/encryption.service');
 const webhookService = require('../services/webhook.service');
@@ -24,6 +25,10 @@ const bankingController = {
 
             // Encrypt access token before storing
             const encryptedAccessToken = encryptionService.encrypt(tokens.access_token);
+
+            await auditLogger.log(userId, 'LINK_ACCOUNT', 'BANKING', tokens.item_id, {
+                publicTokenShort: publicToken.substring(0, 10) + '...'
+            }, req.ip);
 
             // Trigger initial sync in the background
             syncWorker.runFullSync(encryptedAccessToken, userId).catch(err => {
@@ -64,7 +69,20 @@ const bankingController = {
                 return res.status(401).json({ error: 'Missing webhook signature' });
             }
 
-            logger.info('[Banking] Webhook signature received, processing payload...');
+            // Verify signature
+            const isValid = await webhookService.verifyWebhook(signature, req.body);
+            if (!isValid) {
+                logger.warn('[Banking] Rejecting invalid webhook signature');
+                return res.status(403).json({ error: 'Invalid webhook signature' });
+            }
+
+            logger.info('[Banking] Webhook signature verified, processing payload...');
+
+            await auditLogger.log(null, 'WEBHOOK_RECEIVED', 'BANKING', req.body.item_id || 'unknown', {
+                type: req.body.webhook_type,
+                code: req.body.webhook_code
+            }, req.ip);
+
             const result = await webhookService.handleWebhook(req.body);
             res.status(200).json(result);
         } catch (error) {

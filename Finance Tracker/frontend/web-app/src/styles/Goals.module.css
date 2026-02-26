@@ -99,7 +99,62 @@
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 var(--space-lg) 0;
+    margin: 0;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+}
+
+.loadingText {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.errorAlert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-md);
+    color: var(--color-danger);
+    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
+}
+
+.retryButton {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3xl) var(--space-xl);
+    text-align: center;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    border: 2px dashed var(--border-color);
+}
+
+.emptyIcon {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
 }
 
 /* Goals Grid */
@@ -209,6 +264,43 @@
     color: var(--text-primary);
 }
 
+/* Add Savings Form */
+.addSavingsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.amountInput {
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color var(--transition-base);
+}
+
+.amountInput:focus {
+    border-color: var(--color-primary);
+}
+
+.addSavingsActions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.addSavingsActions button {
+    flex: 1;
+}
+
 /* Completed Goals */
 .completedGrid {
     display: grid;
@@ -245,6 +337,73 @@
     width: 1.5rem;
     height: 1.5rem;
     color: var(--color-success);
+}
+
+/* Form Elements in Modal */
+.createGoalForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.select {
+    width: 100%;
+    padding: 0.625rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color var(--transition-base);
+}
+
+.select:focus {
+    border-color: var(--color-primary);
+}
+
+.textarea {
+    width: 100%;
+    padding: 0.625rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-family: inherit;
+    outline: none;
+    resize: vertical;
+    transition: border-color var(--transition-base);
+}
+
+.textarea:focus {
+    border-color: var(--color-primary);
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
 }
 
 @media (max-width: 1024px) {

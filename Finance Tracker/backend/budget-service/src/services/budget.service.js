@@ -77,6 +77,50 @@ const budgetService = {
 
     async deleteBudget(id, userId) {
         return await Budget.delete(id, userId);
+    },
+
+    async getHistoricalSpending(userId, budget) {
+        const now = new Date();
+        let histStart, histEnd;
+
+        // Calculate same period in previous cycle
+        switch (budget.period) {
+            case 'weekly':
+                histStart = new Date(now);
+                histStart.setDate(now.getDate() - now.getDay() - 7);
+                histEnd = new Date(histStart);
+                histEnd.setDate(histStart.getDate() + 6);
+                break;
+            case 'yearly':
+                histStart = new Date(now.getFullYear() - 1, 0, 1);
+                histEnd = new Date(now.getFullYear() - 1, 11, 31);
+                break;
+            case 'monthly':
+            default:
+                histStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                histEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+                break;
+        }
+
+        try {
+            const response = await axios.get(
+                `${TRANSACTION_SERVICE_URL}/categories/${budget.category_id}/spending`,
+                {
+                    params: {
+                        startDate: histStart.toISOString().split('T')[0],
+                        endDate: histEnd.toISOString().split('T')[0]
+                    },
+                    headers: {
+                        'X-Internal-Token': INTERNAL_SERVICE_TOKEN,
+                        'X-User-Id': userId
+                    }
+                }
+            );
+            return parseFloat(response.data?.current_spending || 0);
+        } catch (error) {
+            logger.error(`[Budget Service] Failed to fetch historical spending for category ${budget.category_id}:`, error.message);
+            return 0;
+        }
     }
 };
 

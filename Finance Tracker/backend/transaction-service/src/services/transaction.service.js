@@ -21,11 +21,25 @@ const transactionService = {
         return await Transaction.findByUserId(userId, filters);
     },
 
+    async getRecentTransactions(userId, limit) {
+        return await Transaction.getRecent(userId, limit);
+    },
+
     async getTransactionById(id, userId) {
         return await Transaction.findById(id, userId);
     },
 
-    async updateTransaction(id, userId, updates) {
+    async updateTransaction(id, userId, updates, options = { skipCategorization: false }) {
+        // Prevent infinite loops: if we are updating categorization, we don't want to trigger it again
+        if (!options.skipCategorization && updates.description && !updates.categoryId) {
+            const categoryName = categorizationService.categorize(updates.description);
+            if (categoryName) {
+                const category = await Category.findByName(userId, categoryName);
+                if (category) {
+                    updates.categoryId = category.id;
+                }
+            }
+        }
         return await Transaction.update(id, userId, updates);
     },
 

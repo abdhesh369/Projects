@@ -1,8 +1,6 @@
 const logger = require('../../../shared/utils/logger');
 const axios = require('axios');
 
-// Using localhost as we are in a single-machine dev environment.
-// In production, these would be service names or internal DNS.
 const TRANSACTION_SERVICE_URL = process.env.TRANSACTION_SERVICE_URL || 'http://localhost:3009';
 const INTERNAL_SERVICE_TOKEN = process.env.INTERNAL_SERVICE_TOKEN;
 
@@ -13,7 +11,7 @@ const reportGenerationService = {
                 params: { startDate, endDate },
                 headers: {
                     'X-Internal-Token': INTERNAL_SERVICE_TOKEN,
-                    'X-User-Id': userId // Pass-through auth context
+                    'X-User-Id': userId
                 }
             });
             return response.data;
@@ -48,7 +46,8 @@ const reportGenerationService = {
                     'X-User-Id': userId
                 }
             });
-            return response.data.transactions || response.data;
+            // Support both paginated { data, pagination } and raw array
+            return response.data.data || response.data.transactions || response.data;
         } catch (error) {
             logger.error('[Reporting] Transactions fetch error:', error.message);
             throw new Error('Failed to fetch transactions for export');

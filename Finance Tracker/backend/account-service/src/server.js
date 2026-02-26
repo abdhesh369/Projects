@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const internalLimiter = require('../../shared/middleware/internalRateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -18,6 +19,9 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json({ limit: '10kb' }));
+
+// Internal Rate Limiting (Issue M-07)
+app.use(internalLimiter);
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'account-service' });

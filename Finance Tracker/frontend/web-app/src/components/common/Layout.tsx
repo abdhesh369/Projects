@@ -15,6 +15,7 @@ import {
     ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { NotificationDropdown } from './NotificationDropdown';
+import ErrorBoundary from './ErrorBoundary';
 import styles from './Layout.module.css';
 
 interface LayoutProps {
@@ -145,7 +146,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                 {/* Page content */}
                 <main className={styles.content}>
-                    {children}
+                    <ErrorBoundary>
+                        {children}
+                    </ErrorBoundary>
                 </main>
             </div>
         </div>

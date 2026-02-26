@@ -1,17 +1,19 @@
 const db = require('../config/db');
 
 const Transaction = {
-    async create({ userId, accountId, categoryId, amount, type, description, date, notes, isRecurring }) {
+    async create({ userId, accountId, categoryId, amount, currency, type, description, date, notes, isRecurring }) {
+        if (amount === undefined || isNaN(amount)) throw new Error('Invalid amount');
+
         const query = `
             INSERT INTO transactions (
-                user_id, account_id, category_id, amount, type, 
+                user_id, account_id, category_id, amount, currency, type, 
                 description, date, notes, is_recurring
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *;
         `;
         const values = [
-            userId, accountId, categoryId, amount, type,
+            userId, accountId, categoryId, amount, currency || 'USD', type,
             description, date || new Date(), notes, isRecurring || false
         ];
         const { rows } = await db.query(query, values);
@@ -61,6 +63,19 @@ const Transaction = {
         return { transactions, total };
     },
 
+    async getRecent(userId, limit = 10) {
+        const query = `
+            SELECT t.*, c.name as category_name, c.icon as category_icon, c.color as category_color 
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.user_id = $1
+            ORDER BY t.date DESC
+            LIMIT $2;
+        `;
+        const { rows } = await db.query(query, [userId, limit]);
+        return rows;
+    },
+
     async findById(id, userId) {
         const query = 'SELECT * FROM transactions WHERE id = $1 AND user_id = $2';
         const { rows } = await db.query(query, [id, userId]);
@@ -68,8 +83,12 @@ const Transaction = {
     },
 
     async update(id, userId, updates) {
-        const ALLOWED_FIELDS = ['account_id', 'category_id', 'amount', 'type', 'description', 'date', 'notes', 'is_recurring'];
-        // Map JS camelCase to DB snake_case if necessary, but here the input keys usually match the model keys which match DB columns
+        const ALLOWED_FIELDS = ['account_id', 'category_id', 'amount', 'currency', 'type', 'description', 'date', 'notes', 'is_recurring'];
+
+        if (updates.amount !== undefined && isNaN(updates.amount)) {
+            throw new Error('Invalid amount');
+        }
+
         const fields = Object.keys(updates).filter(key => ALLOWED_FIELDS.includes(key));
         if (fields.length === 0) return null;
 
@@ -126,7 +145,6 @@ const Transaction = {
     },
 
     async getSpendingTrend(userId, { limit = 12 } = {}) {
-        // Fix Issue #14: Return most recent L months sorted chronologically
         const query = `
             SELECT * FROM (
                 SELECT 
@@ -189,7 +207,6 @@ const Transaction = {
         try {
             await client.query('BEGIN');
 
-            // 1. Handle Added (Upsert)
             if (added && added.length > 0) {
                 for (const txn of added) {
                     const query = `
@@ -207,8 +224,6 @@ const Transaction = {
                             updated_at = CURRENT_TIMESTAMP
                         RETURNING id;
                     `;
-                    // Note: We might need to map plaid_account_id to internal account_id
-                    // For now, assuming internal account_id is passed or handled
                     await client.query(query, [
                         userId, txn.account_id, txn.amount, txn.type || 'expense',
                         txn.name || txn.description, txn.date, txn.plaid_transaction_id, txn.pending || false
@@ -216,7 +231,6 @@ const Transaction = {
                 }
             }
 
-            // 2. Handle Modified
             if (modified && modified.length > 0) {
                 for (const txn of modified) {
                     const query = `
@@ -228,7 +242,6 @@ const Transaction = {
                 }
             }
 
-            // 3. Handle Removed
             if (removed && removed.length > 0) {
                 const plaidIds = removed.map(txn => txn.plaid_transaction_id);
                 await client.query('DELETE FROM transactions WHERE plaid_transaction_id = ANY($1) AND user_id = $2', [plaidIds, userId]);

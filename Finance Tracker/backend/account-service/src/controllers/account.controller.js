@@ -1,5 +1,6 @@
 const logger = require('../../../shared/utils/logger');
 const Account = require('../models/account.model');
+const auditLogger = require('../../../shared/utils/audit-logger');
 
 const accountController = {
     async createAccount(req, res) {
@@ -77,11 +78,26 @@ const accountController = {
         try {
             const { id } = req.params;
             const userId = req.user.id;
-            const account = await Account.delete(id, userId);
+
+            // Get account before deletion for audit record
+            const account = await Account.findByIdAndUserId(id, userId);
 
             if (!account) {
                 return res.status(404).json({ error: 'Account not found' });
             }
+
+            await Account.delete(id, userId);
+
+            // AUDIT: Log account deletion (M-04)
+            await auditLogger.log({
+                userId,
+                action: 'DELETE_ACCOUNT',
+                entityType: 'ACCOUNT',
+                entityId: id,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent'),
+                previousState: account
+            });
 
             res.status(200).json({ message: 'Account deleted successfully' });
         } catch (error) {

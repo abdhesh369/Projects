@@ -7,6 +7,7 @@ const jwtService = require('../services/jwt.service');
 const mfaService = require('../services/mfa.service');
 const crypto = require('crypto');
 const redis = require('../config/redis');
+const auditLogger = require('../../../shared/utils/audit-logger');
 
 // Ensure sessions table exists on startup
 Session.ensureTable().catch(err => logger.error('Failed to create sessions table:', err.message));
@@ -36,6 +37,16 @@ const authController = {
             const deviceInfo = req.headers['user-agent'] || 'Unknown';
             const ipAddress = req.ip || req.socket.remoteAddress;
             await Session.create(user.id, token, deviceInfo, ipAddress);
+
+            // AUDIT: Log registration (M-04)
+            await auditLogger.log({
+                userId: user.id,
+                action: 'REGISTER',
+                entityType: 'USER',
+                entityId: user.id,
+                ipAddress,
+                userAgent: deviceInfo
+            });
 
             // Fix Issue #17: Safe object copy instead of mutation
             const { password_hash: _, ...safeUser } = user;
@@ -87,6 +98,16 @@ const authController = {
             const deviceInfo = req.headers['user-agent'] || 'Unknown';
             const ipAddress = req.ip || req.socket.remoteAddress;
             await Session.create(user.id, token, deviceInfo, ipAddress);
+
+            // AUDIT: Log login (M-04)
+            await auditLogger.log({
+                userId: user.id,
+                action: 'LOGIN',
+                entityType: 'USER',
+                entityId: user.id,
+                ipAddress,
+                userAgent: deviceInfo
+            });
 
             // Fix Issue #17: Safe object copy instead of mutation
             const { password_hash: _, mfa_secret: __, ...safeUser } = user;
@@ -240,6 +261,16 @@ const authController = {
             await User.update(userId, { mfa_enabled: true, mfa_secret: secret });
             await mfaService.clearPendingSecret(userId);
 
+            // AUDIT: Log MFA enablement (M-04)
+            await auditLogger.log({
+                userId,
+                action: 'MFA_ENABLED',
+                entityType: 'USER',
+                entityId: userId,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+
             res.status(200).json({ message: 'MFA verified and enabled successfully' });
         } catch (error) {
             logger.error('MFA Verification error:', error);
@@ -271,6 +302,17 @@ const authController = {
             }
 
             await User.update(userId, { mfa_enabled: false, mfa_secret: null });
+
+            // AUDIT: Log MFA disablement (M-04)
+            await auditLogger.log({
+                userId,
+                action: 'MFA_DISABLED',
+                entityType: 'USER',
+                entityId: userId,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+
             res.status(200).json({ message: 'MFA disabled successfully' });
         } catch (error) {
             logger.error('MFA Disable error:', error);
@@ -294,7 +336,16 @@ const authController = {
             await redis.set(`pwdreset:${tokenHash}`, user.id, 'EX', 3600);
 
             logger.info(`[Auth] Forgot Password URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`);
-            // Ideally, fire an event to notification-service here
+
+            // AUDIT: Log forgot password request (M-04)
+            await auditLogger.log({
+                userId: user.id,
+                action: 'PASSWORD_RESET_REQUESTED',
+                entityType: 'USER',
+                entityId: user.id,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
 
             res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
         } catch (error) {
@@ -321,6 +372,16 @@ const authController = {
             await redis.del(`pwdreset:${tokenHash}`);
             await Session.deleteAllByUserId(userId);
             await RefreshToken.deleteByUserId(userId);
+
+            // AUDIT: Log password reset completion (M-04)
+            await auditLogger.log({
+                userId,
+                action: 'PASSWORD_RESET_COMPLETED',
+                entityType: 'USER',
+                entityId: userId,
+                ipAddress: req.ip,
+                userAgent: req.get('User-Agent')
+            });
 
             res.status(200).json({ message: 'Password reset successfully' });
         } catch (error) {

@@ -4,7 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const authMiddleware = require('./middleware/auth.middleware');
+const loggingMiddleware = require('./middleware/logging.middleware');
 const validateRequest = require('./middleware/validation');
+const axios = require('axios');
 
 const helmet = require('helmet');
 
@@ -20,15 +22,49 @@ if (!INTERNAL_SERVICE_TOKEN) {
 // SECURITY: Hardening (Issues #12, #18, #5.7)
 app.use(helmet());
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'http://localhost:3011', // default to frontend
+    origin: process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',')
+        : ['http://localhost:3000', 'http://localhost:3011'],
     credentials: true
 }));
 app.use(express.json({ limit: '10kb' }));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+app.use(loggingMiddleware);
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'api-gateway' });
+});
+
+// Centralized Health Checks (Issue M-10)
+app.get('/health/all', async (req, res) => {
+    const services = {
+        auth: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+        accounts: process.env.ACCOUNTS_SERVICE_URL || 'http://localhost:3002',
+        analytics: process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3003',
+        audit: process.env.AUDIT_SERVICE_URL || 'http://localhost:3004',
+        banking: process.env.BANKING_SERVICE_URL || 'http://localhost:3005',
+        budget: process.env.BUDGET_SERVICE_URL || 'http://localhost:3006',
+        notifications: process.env.NOTIFICATIONS_SERVICE_URL || 'http://localhost:3007',
+        reporting: process.env.REPORTING_SERVICE_URL || 'http://localhost:3008',
+        transactions: process.env.TRANSACTIONS_SERVICE_URL || 'http://localhost:3009',
+        users: process.env.USERS_SERVICE_URL || 'http://localhost:3010',
+        goals: process.env.GOALS_SERVICE_URL || 'http://localhost:3011'
+    };
+
+    const results = {};
+    const checks = Object.entries(services).map(async ([name, url]) => {
+        try {
+            const start = Date.now();
+            await axios.get(`${url}/health`, { timeout: 2000 });
+            results[name] = { status: 'UP', latency: `${Date.now() - start}ms` };
+        } catch (error) {
+            results[name] = { status: 'DOWN', error: error.message };
+        }
+    });
+
+    await Promise.all(checks);
+    res.status(200).json({ gateway: 'UP', services: results });
 });
 
 // Auth Middleware (applied before proxies)
@@ -39,7 +75,7 @@ app.use(validateRequest);
 const createServiceProxy = (target) => createProxyMiddleware({
     target,
     changeOrigin: true,
-    pathRewrite: (path) => path.replace(/^\/api\/[^\/]+/, '') || '/', // Fix Issue #8: Ensure at least '/' is returned
+    pathRewrite: (path) => path.replace(/^\/api\/[^\/]+/, '') || '/',
     onProxyReq: (proxyReq, req, res) => {
         // Add Internal Secret
         proxyReq.setHeader('X-Internal-Token', INTERNAL_SERVICE_TOKEN);
@@ -50,7 +86,6 @@ const createServiceProxy = (target) => createProxyMiddleware({
             if (req.user.email) proxyReq.setHeader('X-User-Email', req.user.email);
             if (req.user.role) proxyReq.setHeader('X-User-Role', req.user.role);
         }
-        logger.info(`[Proxy] ${req.method} ${req.url} -> ${target}`);
     },
     onError: (err, req, res) => {
         logger.error('Proxy Error:', err);
@@ -74,11 +109,26 @@ app.use('/api/users', rateLimit, createServiceProxy(process.env.USERS_SERVICE_UR
 app.use('/api/audit', rateLimit, createServiceProxy(process.env.AUDIT_SERVICE_URL || 'http://localhost:3004'));
 app.use('/api/banking', rateLimit, createServiceProxy(process.env.BANKING_SERVICE_URL || 'http://localhost:3005'));
 app.use('/api/budget', rateLimit, createServiceProxy(process.env.BUDGET_SERVICE_URL || 'http://localhost:3006'));
+app.use('/api/goals', rateLimit, createServiceProxy(process.env.GOALS_SERVICE_URL || 'http://localhost:3011'));
 app.use('/api/notifications', rateLimit, createServiceProxy(process.env.NOTIFICATIONS_SERVICE_URL || 'http://localhost:3007'));
 app.use('/api/reporting', rateLimit, createServiceProxy(process.env.REPORTING_SERVICE_URL || 'http://localhost:3008'));
 app.use('/api/transactions', rateLimit, createServiceProxy(process.env.TRANSACTIONS_SERVICE_URL || 'http://localhost:3009'));
 app.use('/api/analytics', rateLimit, createServiceProxy(process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3003'));
-app.use('/api/billing', rateLimit, createServiceProxy(process.env.USERS_SERVICE_URL || 'http://localhost:3010'));
+
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.method} ${req.url} not found` });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    logger.error('Unhandled Error:', err);
+    const status = err.status || 500;
+    res.status(status).json({
+        error: status === 500 ? 'Internal Server Error' : err.message,
+        timestamp: new Date().toISOString()
+    });
+});
 
 app.listen(PORT, () => {
     logger.info(`API Gateway running on port ${PORT}`);

@@ -16,6 +16,7 @@ router.use(authMiddleware);
 router.post('/', transactionController.create);
 router.post('/import', transactionController.import);
 router.get('/', transactionController.list);
+router.get('/recent', transactionController.getRecent);
 router.get('/recurring', transactionController.listRecurring);
 router.post('/recurring', transactionController.createRecurring);
 router.get('/summary', transactionController.getSummary);

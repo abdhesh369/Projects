@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const response = await authService.login(credentials);
             setUser(response.user);
-            localStorage.setItem('token', response.token);
+            // httpOnly cookies are set by the server automatically
             router.push('/');
         } catch (error) {
             console.error('Login failed:', error);
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const response = await authService.register(data);
             setUser(response.user);
-            localStorage.setItem('token', response.token);
+            // httpOnly cookies are set by the server automatically
             router.push('/');
         } catch (error) {
             console.error('Registration failed:', error);
@@ -63,7 +63,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             await authService.logout();
             setUser(null);
-            localStorage.removeItem('token');
             router.push('/login');
         } catch (error) {
             console.error('Logout failed:', error);
